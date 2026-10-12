@@ -131,7 +131,10 @@ func (s EvidenceService) UploadInternalControlEvidence(
 					"evidence-id":     evidenceID.String(),
 					"organization-id": internalControl.OrganizationID.String(),
 				},
-				&req.File)
+				&req.File,
+				coredata.FileVisibilityPrivate,
+				nil,
+			)
 			if err != nil {
 				return fmt.Errorf("cannot upload or file: %w", err)
 			}

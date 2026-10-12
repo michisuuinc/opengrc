@@ -29,6 +29,7 @@ import (
 	"time"
 
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/attachment"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
@@ -111,7 +112,7 @@ func (s *Service) ApplyInboundIssue(
 				return fmt.Errorf("cannot load task %q: %w", link.TaskID, err)
 			}
 
-			mapped, err := mapInboundIssue(task, data)
+			mapped, err := mapInboundIssue(task, data, attachmentsFromMetadata(link.Metadata))
 			if err != nil {
 				return err
 			}
@@ -127,6 +128,23 @@ func (s *Service) ApplyInboundIssue(
 				data,
 			); err != nil {
 				return fmt.Errorf("cannot apply Linear assignee: %w", err)
+			}
+
+			// A Linear description can name an attachment URL directly. Bind it
+			// the same way task create and update do, before the body is stored.
+			bound, err := attachment.Attach(ctx, tx, scope, link.OrganizationID, task.ID, mapped.Content)
+			if err != nil {
+				return fmt.Errorf("cannot bind task files: %w", err)
+			}
+
+			if bound != mapped.Content {
+				canonical, err := ContentToMarkdown(bound)
+				if err != nil {
+					return fmt.Errorf("cannot render task content: %w", err)
+				}
+
+				mapped.Content = bound
+				mapped.Markdown = canonical
 			}
 
 			hash := ContentHash(
@@ -232,7 +250,11 @@ type inboundMappedFields struct {
 	Deadline *time.Time
 }
 
-func mapInboundIssue(task *coredata.Task, data *linear.IssueWebhookData) (inboundMappedFields, error) {
+func mapInboundIssue(
+	task *coredata.Task,
+	data *linear.IssueWebhookData,
+	files map[string]string,
+) (inboundMappedFields, error) {
 	markdown, err := ContentToMarkdown(task.Content)
 	if err != nil {
 		return inboundMappedFields{}, err
@@ -252,7 +274,7 @@ func mapInboundIssue(task *coredata.Task, data *linear.IssueWebhookData) (inboun
 	}
 
 	if data.Has("description") {
-		content, err := MarkdownToContent(data.Description)
+		content, err := MarkdownToContent(restoreLinearFiles(data.Description, files))
 		if err != nil {
 			return inboundMappedFields{}, err
 		}

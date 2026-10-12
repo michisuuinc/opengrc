@@ -11,7 +11,9 @@ import (
 
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/attachment"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/server/api/authn"
 	"go.probo.inc/probo/pkg/server/api/console/v1/dataloader"
@@ -30,6 +32,21 @@ func (r *mutationResolver) CreateTaskComment(ctx context.Context, input types.Cr
 	}
 
 	identity := authn.IdentityFromContext(ctx)
+
+	parentTask, err := r.task.Get(ctx, scope, input.TaskID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load task", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	if err := r.authorizeAttachments(ctx, scope, parentTask.OrganizationID, input.Content, gid.Nil); err != nil {
+		return nil, err
+	}
 
 	taskComment, err := r.task.CreateComment(
 		ctx, scope,
@@ -67,14 +84,28 @@ func (r *mutationResolver) UpdateTaskComment(ctx context.Context, input types.Up
 	}
 
 	taskComment, err := r.task.UpdateComment(
-		ctx, scope,
+		ctx,
+		scope,
 		task.UpdateTaskCommentRequest{
 			ID:      input.TaskCommentID,
 			OwnerID: gqlutils.UnwrapOmittable(input.OwnerID),
 			Content: gqlutils.UnwrapOmittable(input.Content),
 		},
+		func(ctx context.Context, fileIDs []gid.GID) error {
+			_, err := r.batchAuthorize(ctx, attachment.ActionCreate, fileIDs)
+
+			return err
+		},
 	)
 	if err != nil {
+		if denied, ok := errors.AsType[*task.ErrUnauthorizedCommentFiles](err); ok {
+			return nil, denied.Unwrap()
+		}
+
+		if _, ok := errors.AsType[*attachment.ErrInvalidFileID](err); ok {
+			return nil, gqlutils.Invalid(ctx, err)
+		}
+
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, gqlutils.NotFound(ctx, err)
 		}

@@ -27,6 +27,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"net/textproto"
 	"net/url"
 	"strings"
 	"time"
@@ -207,15 +208,17 @@ func (c *Client) doRequest(
 
 // DoUpload sends a GraphQL multipart file upload request following the
 // graphql-multipart-request-spec. It maps the given file to the variable
-// at the provided path (e.g. "variables.input.file").
+// at the provided path (e.g. "variables.input.file"). contentType is the
+// file part's MIME type; an empty value is sent as application/octet-stream.
 func (c *Client) DoUpload(
 	query string,
 	variables map[string]any,
 	varPath string,
 	filename string,
+	contentType string,
 	file io.Reader,
 ) (json.RawMessage, error) {
-	raw, err := c.doUploadRequest(query, variables, varPath, filename, file)
+	raw, err := c.doUploadRequest(query, variables, varPath, filename, contentType, file)
 	if err != nil {
 		return nil, err
 	}
@@ -244,6 +247,7 @@ func (c *Client) doUploadRequest(
 	variables map[string]any,
 	varPath string,
 	filename string,
+	contentType string,
 	file io.Reader,
 ) ([]byte, error) {
 	var buf bytes.Buffer
@@ -280,9 +284,9 @@ func (c *Client) doUploadRequest(
 	}
 
 	// Part 3: file
-	part, err := writer.CreateFormFile("0", filename)
+	part, err := createUploadPart(writer, filename, contentType)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create form file: %w", err)
+		return nil, err
 	}
 
 	if _, err := io.Copy(part, file); err != nil {
@@ -340,6 +344,38 @@ func (c *Client) doUploadRequest(
 	}
 
 	return respBody, nil
+}
+
+func createUploadPart(writer *multipart.Writer, filename, contentType string) (io.Writer, error) {
+	if strings.ContainsAny(filename, "\r\n") {
+		return nil, fmt.Errorf("cannot create form file: filename contains a line break")
+	}
+
+	if contentType == "" {
+		contentType = "application/octet-stream"
+	}
+
+	if strings.ContainsAny(contentType, "\r\n") {
+		return nil, fmt.Errorf("cannot create form file: content type contains a line break")
+	}
+
+	header := make(textproto.MIMEHeader)
+	header.Set(
+		"Content-Disposition",
+		fmt.Sprintf(`form-data; name="%s"; filename="%s"`, escapeQuotes("0"), escapeQuotes(filename)),
+	)
+	header.Set("Content-Type", contentType)
+
+	part, err := writer.CreatePart(header)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create form file: %w", err)
+	}
+
+	return part, nil
+}
+
+func escapeQuotes(s string) string {
+	return strings.NewReplacer("\\", "\\\\", `"`, "\\\"").Replace(s)
 }
 
 func (c *Client) tryRefreshToken() error {

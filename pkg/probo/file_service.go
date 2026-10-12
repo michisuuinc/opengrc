@@ -33,7 +33,22 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/prosemirror"
+	"go.probo.inc/probo/pkg/server/api/authn"
+	"go.probo.inc/probo/pkg/validator"
 )
+
+var attachmentValidator = filevalidation.NewAttachmentValidator()
+
+// ContentTypeForAttachment returns the MIME type accepted for filename.
+func ContentTypeForAttachment(filename string) (string, bool) {
+	return filevalidation.ContentTypeForAttachment(filename)
+}
+
+// AttachmentMaxFileSize is the largest file UploadFile accepts.
+func AttachmentMaxFileSize() int64 {
+	return attachmentValidator.MaxFileSize
+}
 
 type (
 	FileService struct {
@@ -106,11 +121,96 @@ func (s FileService) GetByIDs(
 	return files, nil
 }
 
+type AttachmentUpload struct {
+	OrganizationID gid.GID
+	File           *FileUpload
+}
+
+func (s FileService) UploadFile(
+	ctx context.Context,
+	scope coredata.Scoper,
+	req AttachmentUpload,
+) (*coredata.File, error) {
+	if err := attachmentValidator.Validate(req.File.Filename, req.File.ContentType, req.File.Size); err != nil {
+		return nil, validator.ValidationErrors{
+			{
+				Field:   "file",
+				Code:    validator.ErrorCodeInvalidFormat,
+				Message: err.Error(),
+			},
+		}
+	}
+
+	if len(req.File.Filename) > prosemirror.MaxFileNameBytes {
+		return nil, validator.ValidationErrors{
+			{
+				Field:   "file",
+				Code:    validator.ErrorCodeTooLong,
+				Message: fmt.Sprintf("file name must be at most %d bytes", prosemirror.MaxFileNameBytes),
+			},
+		}
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+	if identity == nil {
+		return nil, fmt.Errorf("missing identity")
+	}
+
+	var (
+		organization = &coredata.Organization{}
+		profile      = &coredata.MembershipProfile{}
+	)
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := organization.LoadByID(ctx, conn, scope, req.OrganizationID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
+			if err := profile.LoadByIdentityIDAndOrganizationID(
+				ctx,
+				conn,
+				scope,
+				identity.ID,
+				req.OrganizationID,
+			); err != nil {
+				return fmt.Errorf("cannot load membership profile: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load uploader: %w", err)
+	}
+
+	file, err := s.UploadAndSaveFile(
+		ctx,
+		scope,
+		attachmentValidator,
+		map[string]string{
+			"type":            "attachment",
+			"organization-id": organization.ID.String(),
+		},
+		req.File,
+		coredata.FileVisibilityAttachment,
+		&profile.ID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot upload file: %w", err)
+	}
+
+	return file, nil
+}
+
 func (s FileService) UploadAndSaveFile(
 	ctx context.Context, scope coredata.Scoper,
 	fileValidator *filevalidation.FileValidator,
 	s3Metadata map[string]string,
 	req *FileUpload,
+	visibility coredata.FileVisibility,
+	uploaderProfileID *gid.GID,
 ) (*coredata.File, error) {
 	objectKey, err := uuid.NewV7()
 	if err != nil {
@@ -173,16 +273,17 @@ func (s FileService) UploadAndSaveFile(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
 			file = &coredata.File{
-				ID:             fileID,
-				OrganizationID: organizationID,
-				BucketName:     s.svc.bucket,
-				MimeType:       mimeType,
-				FileName:       req.Filename,
-				FileKey:        objectKey.String(),
-				FileSize:       *headOutput.ContentLength,
-				Visibility:     coredata.FileVisibilityPrivate,
-				CreatedAt:      now,
-				UpdatedAt:      now,
+				ID:                fileID,
+				OrganizationID:    organizationID,
+				BucketName:        s.svc.bucket,
+				MimeType:          mimeType,
+				FileName:          req.Filename,
+				FileKey:           objectKey.String(),
+				FileSize:          *headOutput.ContentLength,
+				Visibility:        visibility,
+				UploaderProfileID: uploaderProfileID,
+				CreatedAt:         now,
+				UpdatedAt:         now,
 			}
 
 			if err := file.Insert(ctx, conn, scope); err != nil {
@@ -215,4 +316,70 @@ func (s FileService) GenerateFileURL(
 	}
 
 	return presignedURL, nil
+}
+
+func (s FileService) ListAttachments(
+	ctx context.Context,
+	scope coredata.Scoper,
+	organizationID gid.GID,
+	fileID gid.GID,
+) (coredata.Attachments, error) {
+	var attachments coredata.Attachments
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := attachments.LoadByFileIDs(ctx, conn, scope, organizationID, []gid.GID{fileID}); err != nil {
+				return fmt.Errorf("cannot load attachments: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return attachments, nil
+}
+
+// UploadedBy reports whether identityID is the membership profile that uploaded file.
+// A file with no uploader matches nobody.
+func (s FileService) UploadedBy(
+	ctx context.Context,
+	scope coredata.Scoper,
+	file *coredata.File,
+	identityID gid.GID,
+) (bool, error) {
+	if file.UploaderProfileID == nil {
+		return false, nil
+	}
+
+	profile := &coredata.MembershipProfile{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			if err := profile.LoadByIdentityIDAndOrganizationID(
+				ctx,
+				conn,
+				scope,
+				identityID,
+				file.OrganizationID,
+			); err != nil {
+				return fmt.Errorf("cannot load membership profile: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return false, nil
+		}
+
+		return false, err
+	}
+
+	return profile.ID == *file.UploaderProfileID, nil
 }

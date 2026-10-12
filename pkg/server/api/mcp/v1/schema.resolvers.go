@@ -14,6 +14,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
+	"go.probo.inc/probo/pkg/attachment"
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
 	cloudazure "go.probo.inc/probo/pkg/cloud/azure"
 	cloudgcp "go.probo.inc/probo/pkg/cloud/gcp"
@@ -2191,6 +2192,12 @@ func (r *Resolver) AddTaskTool(ctx context.Context, req *mcp.CallToolRequest, in
 
 	identity := authn.IdentityFromContext(ctx)
 
+	if content != nil {
+		if err := r.authorizeAttachments(ctx, scope, input.OrganizationID, *content, gid.Nil); err != nil {
+			return nil, types.AddTaskOutput{}, err
+		}
+	}
+
 	task, err := r.task.Create(
 		ctx, scope,
 		task.CreateTaskRequest{
@@ -2234,6 +2241,23 @@ func (r *Resolver) UpdateTaskTool(ctx context.Context, req *mcp.CallToolRequest,
 	}
 
 	identity := authn.IdentityFromContext(ctx)
+
+	if content != nil && *content != nil {
+		existing, err := r.task.Get(ctx, scope, input.ID)
+		if err != nil {
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				return nil, types.UpdateTaskOutput{}, fmt.Errorf("resource not found")
+			}
+
+			r.logger.ErrorCtx(ctx, "cannot load task", log.Error(err))
+
+			return nil, types.UpdateTaskOutput{}, fmt.Errorf("internal server error")
+		}
+
+		if err := r.authorizeAttachments(ctx, scope, existing.OrganizationID, **content, input.ID); err != nil {
+			return nil, types.UpdateTaskOutput{}, err
+		}
+	}
 
 	updated, err := r.task.Update(
 		ctx,
@@ -2414,6 +2438,10 @@ func (r *Resolver) AddDocumentTool(ctx context.Context, req *mcp.CallToolRequest
 		panic(fmt.Errorf("cannot convert markdown to prosemirror: %w", err))
 	}
 
+	if err := r.authorizeAttachments(ctx, scope, input.OrganizationID, contentJSON, gid.Nil); err != nil {
+		return nil, types.AddDocumentOutput{}, err
+	}
+
 	document, documentVersion, err := svc.Documents.Create(
 		ctx, scope,
 		probo.CreateDocumentRequest{
@@ -2454,6 +2482,23 @@ func (r *Resolver) UpdateDocumentTool(ctx context.Context, req *mcp.CallToolRequ
 		}
 
 		content = &c
+	}
+
+	if content != nil {
+		latest, err := svc.Documents.GetLatestVersion(ctx, scope, input.ID)
+		if err != nil {
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				return nil, types.UpdateDocumentOutput{}, fmt.Errorf("resource not found")
+			}
+
+			r.logger.ErrorCtx(ctx, "cannot get document version", log.Error(err))
+
+			return nil, types.UpdateDocumentOutput{}, fmt.Errorf("internal server error")
+		}
+
+		if err := r.authorizeAttachments(ctx, scope, latest.OrganizationID, *content, latest.ID); err != nil {
+			return nil, types.UpdateDocumentOutput{}, err
+		}
 	}
 
 	document, documentVersion, _, err := svc.Documents.Update(
@@ -6787,6 +6832,12 @@ func (r *Resolver) AddRiskAnalysisTool(ctx context.Context, req *mcp.CallToolReq
 		return nil, types.AddRiskAnalysisOutput{}, fmt.Errorf("cannot convert description: %w", err)
 	}
 
+	if description != nil {
+		if err := r.authorizeAttachments(ctx, scope, input.OrganizationID, *description, gid.Nil); err != nil {
+			return nil, types.AddRiskAnalysisOutput{}, err
+		}
+	}
+
 	ra, err := r.riskManagement.Create(ctx, scope, riskmanagement.CreateRiskAnalysisRequest{
 		OrganizationID: input.OrganizationID,
 		Name:           input.Name,
@@ -6820,6 +6871,23 @@ func (r *Resolver) UpdateRiskAnalysisTool(ctx context.Context, req *mcp.CallTool
 	description, err := omittableMarkdownToProseMirrorJSON(UnwrapOmittable(input.Description))
 	if err != nil {
 		return nil, types.UpdateRiskAnalysisOutput{}, fmt.Errorf("cannot convert description: %w", err)
+	}
+
+	if description != nil && *description != nil {
+		existing, err := r.riskManagement.Get(ctx, scope, input.ID)
+		if err != nil {
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				return nil, types.UpdateRiskAnalysisOutput{}, fmt.Errorf("resource not found")
+			}
+
+			r.logger.ErrorCtx(ctx, "cannot load risk assessment", log.Error(err))
+
+			return nil, types.UpdateRiskAnalysisOutput{}, fmt.Errorf("internal server error")
+		}
+
+		if err := r.authorizeAttachments(ctx, scope, existing.OrganizationID, **description, input.ID); err != nil {
+			return nil, types.UpdateRiskAnalysisOutput{}, err
+		}
 	}
 
 	ra, err := r.riskManagement.Update(ctx, scope, riskmanagement.UpdateRiskAnalysisRequest{
@@ -6885,6 +6953,12 @@ func (r *Resolver) ForkRiskAnalysisTool(ctx context.Context, req *mcp.CallToolRe
 	description, err := optionalMarkdownToProseMirrorJSON(input.Description)
 	if err != nil {
 		return nil, types.ForkRiskAnalysisOutput{}, fmt.Errorf("cannot convert description: %w", err)
+	}
+
+	if description != nil {
+		if err := r.authorizeAttachments(ctx, scope, source.OrganizationID, *description, input.ID); err != nil {
+			return nil, types.ForkRiskAnalysisOutput{}, err
+		}
 	}
 
 	ra, err := r.riskManagement.Fork(
@@ -9703,6 +9777,21 @@ func (r *Resolver) AddTaskCommentTool(ctx context.Context, req *mcp.CallToolRequ
 		panic(fmt.Errorf("cannot convert markdown to prosemirror: %w", err))
 	}
 
+	parentTask, err := r.task.Get(ctx, scope, input.TaskID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, types.AddTaskCommentOutput{}, fmt.Errorf("resource not found")
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot load task", log.Error(err))
+
+		return nil, types.AddTaskCommentOutput{}, fmt.Errorf("internal server error")
+	}
+
+	if err := r.authorizeAttachments(ctx, scope, parentTask.OrganizationID, content, gid.Nil); err != nil {
+		return nil, types.AddTaskCommentOutput{}, err
+	}
+
 	taskComment, err := r.task.CreateComment(
 		ctx, scope,
 		task.CreateTaskCommentRequest{
@@ -9748,14 +9837,28 @@ func (r *Resolver) UpdateTaskCommentTool(ctx context.Context, req *mcp.CallToolR
 	}
 
 	taskComment, err := r.task.UpdateComment(
-		ctx, scope,
+		ctx,
+		scope,
 		task.UpdateTaskCommentRequest{
 			ID:      input.ID,
 			OwnerID: optionalPtr(input.OwnerID),
 			Content: content,
 		},
+		func(ctx context.Context, fileIDs []gid.GID) error {
+			_, err := r.AuthorizeBatch(ctx, fileIDs, attachment.ActionCreate)
+
+			return err
+		},
 	)
 	if err != nil {
+		if denied, ok := errors.AsType[*task.ErrUnauthorizedCommentFiles](err); ok {
+			return nil, types.UpdateTaskCommentOutput{}, denied.Unwrap()
+		}
+
+		if _, ok := errors.AsType[*attachment.ErrInvalidFileID](err); ok {
+			return nil, types.UpdateTaskCommentOutput{}, fmt.Errorf("invalid attachment id")
+		}
+
 		if errors.Is(err, coredata.ErrResourceNotFound) {
 			return nil, types.UpdateTaskCommentOutput{}, fmt.Errorf("resource not found")
 		}
@@ -10732,4 +10835,8 @@ func (r *Resolver) CreateAccessReviewSourcesTool(ctx context.Context, req *mcp.C
 
 func (r *Resolver) ListConnectorProvidersTool(ctx context.Context, req *mcp.CallToolRequest, input *types.ListConnectorProvidersInput) (*mcp.CallToolResult, types.ListConnectorProvidersOutput, error) {
 	return r.listConnectorProviders(ctx)
+}
+
+func (r *Resolver) UploadAttachmentFileTool(ctx context.Context, _ *mcp.CallToolRequest, input *types.UploadAttachmentFileInput) (*mcp.CallToolResult, types.UploadAttachmentFileOutput, error) {
+	return r.uploadAttachmentFile(ctx, input)
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/riskmanagement"
@@ -37,6 +38,12 @@ func (r *mutationResolver) CreateRiskAnalysis(ctx context.Context, input types.C
 		period = &riskmanagement.Period{
 			Start: start,
 			End:   end,
+		}
+	}
+
+	if input.Description != nil {
+		if err := r.authorizeAttachments(ctx, scope, input.OrganizationID, *input.Description, gid.Nil); err != nil {
+			return nil, err
 		}
 	}
 
@@ -87,13 +94,31 @@ func (r *mutationResolver) UpdateRiskAnalysis(ctx context.Context, input types.U
 		}
 	}
 
+	description := gqlutils.UnwrapOmittable(input.Description)
+	if description != nil && *description != nil {
+		existing, err := r.riskManagement.Get(ctx, scope, input.ID)
+		if err != nil {
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				return nil, gqlutils.NotFound(ctx, err)
+			}
+
+			r.logger.ErrorCtx(ctx, "cannot load risk assessment", log.Error(err))
+
+			return nil, gqlutils.Internal(ctx)
+		}
+
+		if err := r.authorizeAttachments(ctx, scope, existing.OrganizationID, **description, input.ID); err != nil {
+			return nil, err
+		}
+	}
+
 	ra, err := r.riskManagement.Update(
 		ctx,
 		scope,
 		riskmanagement.UpdateRiskAnalysisRequest{
 			ID:          input.ID,
 			Name:        input.Name,
-			Description: gqlutils.UnwrapOmittable(input.Description),
+			Description: description,
 			Period:      period,
 		},
 	)
@@ -164,6 +189,12 @@ func (r *mutationResolver) ForkRiskAnalysis(ctx context.Context, input types.For
 		period = &riskmanagement.Period{
 			Start: start,
 			End:   end,
+		}
+	}
+
+	if input.Description != nil {
+		if err := r.authorizeAttachments(ctx, scope, source.OrganizationID, *input.Description, input.RiskAnalysisID); err != nil {
+			return nil, err
 		}
 	}
 

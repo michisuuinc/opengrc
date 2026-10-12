@@ -20,7 +20,10 @@
 
 package task
 
-import "go.probo.inc/probo/pkg/coredata"
+import (
+	"go.probo.inc/probo/pkg/attachment"
+	"go.probo.inc/probo/pkg/coredata"
+)
 
 const (
 	scopeV1TaskRead coredata.OAuth2Scope = "v1:task:read"
@@ -30,5 +33,8 @@ const (
 // OAuth2ScopeMappings maps OAuth2 scopes to task actions.
 var OAuth2ScopeMappings = map[coredata.OAuth2Scope][]string{
 	scopeV1TaskRead: readActions,
-	scopeV1Task:     append(append([]string{}, readActions...), writeActions...),
+	scopeV1Task: append(
+		append(append([]string{}, readActions...), writeActions...),
+		attachment.ActionCreate,
+	),
 }

@@ -31,6 +31,7 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
+	"go.probo.inc/probo/pkg/attachment"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
@@ -74,6 +75,7 @@ type Resolver struct {
 	riskManagement        *riskmanagement.Service
 	itamSvc               *itam.Service
 	task                  *task.Service
+	attachment            *attachment.Service
 	mailman               *mailman.Service
 	logger                *log.Logger
 	fileManager           *filemanager.Service

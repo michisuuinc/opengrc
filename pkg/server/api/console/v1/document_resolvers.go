@@ -951,6 +951,10 @@ func (r *mutationResolver) CreateDocument(ctx context.Context, input types.Creat
 		content = *input.Content
 	}
 
+	if err := r.authorizeAttachments(ctx, scope, input.OrganizationID, content, gid.Nil); err != nil {
+		return nil, err
+	}
+
 	document, documentVersion, err := r.probo.Documents.Create(
 		ctx, scope,
 		probo.CreateDocumentRequest{
@@ -992,6 +996,23 @@ func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.Updat
 	var defaultApproverIDs *[]gid.GID
 	if input.DefaultApproverIds != nil {
 		defaultApproverIDs = &input.DefaultApproverIds
+	}
+
+	if input.Content != nil {
+		latest, err := r.probo.Documents.GetLatestVersion(ctx, scope, input.ID)
+		if err != nil {
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				return nil, gqlutils.NotFound(ctx, err)
+			}
+
+			r.logger.ErrorCtx(ctx, "cannot load latest document version", log.Error(err))
+
+			return nil, gqlutils.Internal(ctx)
+		}
+
+		if err := r.authorizeAttachments(ctx, scope, latest.OrganizationID, *input.Content, latest.ID); err != nil {
+			return nil, err
+		}
 	}
 
 	document, documentVersion, draftCreated, err := r.probo.Documents.Update(

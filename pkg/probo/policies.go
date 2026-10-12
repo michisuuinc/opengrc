@@ -21,12 +21,18 @@
 package probo
 
 import (
+	"go.probo.inc/probo/pkg/attachment"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/iam/policy"
 )
 
 var (
 	organizationCondition = policy.Equals("principal.organization_id", "resource.organization_id")
+
+	// core:* matches attachment create, so only the uploader may create an attachment.
+	denyCreateOthersAttachment = policy.Deny(attachment.ActionCreate).
+					WithSID("deny-create-others-attachment").
+					When(policy.NotEquals("principal.id", "resource.uploader_id"))
 )
 
 // OwnerPolicy defines permissions for organization owners.
@@ -34,6 +40,7 @@ var OwnerPolicy = policy.NewPolicy(
 	"probo:owner",
 	"Probo Owner",
 	policy.Allow("core:*").WithSID("full-core-access").When(organizationCondition),
+	denyCreateOthersAttachment,
 ).WithDescription("Full probo access for organization owners")
 
 // AdminPolicy defines permissions for organization admins.
@@ -41,6 +48,7 @@ var AdminPolicy = policy.NewPolicy(
 	"probo:admin",
 	"Probo Admin",
 	policy.Allow("core:*").WithSID("full-core-access").When(organizationCondition),
+	denyCreateOthersAttachment,
 ).WithDescription("Probo admin access - can manage core entities")
 
 // ViewerPolicy defines read-only permissions for organization viewers.
@@ -231,6 +239,7 @@ var CompliancePortalManagerPolicy = policy.NewPolicy(
 
 	policy.Allow(
 		ActionDocumentGet, ActionDocumentList, ActionDocumentUpdate,
+		attachment.ActionUpload,
 		ActionDocumentVersionGet, ActionDocumentVersionList,
 		ActionAuditGet, ActionAuditList, ActionAuditUpdate,
 		ActionReportGet, ActionReportGetReportUrl, ActionReportDownloadUrlGet,
@@ -241,6 +250,9 @@ var CompliancePortalManagerPolicy = policy.NewPolicy(
 		ActionSlackConnectionList, ActionConnectorList, ActionConnectorGet,
 		ActionConnectorInitiate, ActionConnectorDelete,
 	).WithSID("compliance-portal-related-access").When(organizationCondition),
+	policy.Allow(attachment.ActionCreate).
+		WithSID("create-own-attachment").
+		When(organizationCondition, policy.Equals("principal.id", "resource.uploader_id")),
 ).WithDescription("Access required to manage the compliance portal and related entity visibility")
 
 // CompliancePortalAccessManagerPolicy defines permissions needed to review and

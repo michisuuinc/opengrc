@@ -29,6 +29,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/agentexecution"
+	"go.probo.inc/probo/pkg/attachment"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
@@ -96,6 +97,7 @@ type (
 		thirdParty              *thirdparty.Service
 		itam                    *itam.Service
 		task                    *task.Service
+		attachment              *attachment.Service
 		logger                  *log.Logger
 		fileManager             *filemanager.Service
 		baseURL                 *baseurl.BaseURL
@@ -141,6 +143,7 @@ func NewMux(
 	graphqlLimits gqlutils.Limits,
 	itamSvc *itam.Service,
 	taskSvc *task.Service,
+	attachmentSvc *attachment.Service,
 	identityFederation *identityfederation.Issuer,
 	awsConnectorInstall cloudaws.ConnectorInstallConfig,
 	gcpConnectorInstall cloudgcp.ConnectorInstallConfig,
@@ -173,6 +176,7 @@ func NewMux(
 		graphqlLimits,
 		itamSvc,
 		taskSvc,
+		attachmentSvc,
 		probotIdentityBindings,
 		slackbotInstallations,
 		botDeliveryDestinations,

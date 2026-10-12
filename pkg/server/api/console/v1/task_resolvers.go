@@ -12,6 +12,7 @@ import (
 	"github.com/vikstrous/dataloadgen"
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/probo"
@@ -33,6 +34,12 @@ func (r *mutationResolver) CreateTask(ctx context.Context, input types.CreateTas
 	}
 
 	identity := authn.IdentityFromContext(ctx)
+
+	if input.Content != nil {
+		if err := r.authorizeAttachments(ctx, scope, input.OrganizationID, *input.Content, gid.Nil); err != nil {
+			return nil, err
+		}
+	}
 
 	task, err := r.task.Create(
 		ctx, scope,
@@ -81,6 +88,24 @@ func (r *mutationResolver) UpdateTask(ctx context.Context, input types.UpdateTas
 	}
 
 	identity := authn.IdentityFromContext(ctx)
+	content := gqlutils.UnwrapOmittable(input.Content)
+
+	if content != nil && *content != nil {
+		existing, err := r.task.Get(ctx, scope, input.TaskID)
+		if err != nil {
+			if errors.Is(err, coredata.ErrResourceNotFound) {
+				return nil, gqlutils.NotFound(ctx, err)
+			}
+
+			r.logger.ErrorCtx(ctx, "cannot load task", log.Error(err))
+
+			return nil, gqlutils.Internal(ctx)
+		}
+
+		if err := r.authorizeAttachments(ctx, scope, existing.OrganizationID, **content, input.TaskID); err != nil {
+			return nil, err
+		}
+	}
 
 	updated, err := r.task.Update(
 		ctx,
@@ -88,7 +113,7 @@ func (r *mutationResolver) UpdateTask(ctx context.Context, input types.UpdateTas
 		task.UpdateTaskRequest{
 			TaskID:             input.TaskID,
 			Name:               input.Name,
-			Content:            gqlutils.UnwrapOmittable(input.Content),
+			Content:            content,
 			State:              input.State,
 			Priority:           input.Priority,
 			Rank:               input.Rank,

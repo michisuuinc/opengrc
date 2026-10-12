@@ -36,17 +36,18 @@ import (
 
 type (
 	File struct {
-		ID             gid.GID        `db:"id"`
-		OrganizationID gid.GID        `db:"organization_id"`
-		BucketName     string         `db:"bucket_name"`
-		MimeType       string         `db:"mime_type"`
-		FileName       string         `db:"file_name"`
-		FileKey        string         `db:"file_key"`
-		FileSize       int64          `db:"file_size"`
-		Visibility     FileVisibility `db:"visibility"`
-		CreatedAt      time.Time      `db:"created_at"`
-		UpdatedAt      time.Time      `db:"updated_at"`
-		DeletedAt      *time.Time     `db:"deleted_at"`
+		ID                gid.GID        `db:"id"`
+		OrganizationID    gid.GID        `db:"organization_id"`
+		BucketName        string         `db:"bucket_name"`
+		MimeType          string         `db:"mime_type"`
+		FileName          string         `db:"file_name"`
+		FileKey           string         `db:"file_key"`
+		FileSize          int64          `db:"file_size"`
+		Visibility        FileVisibility `db:"visibility"`
+		UploaderProfileID *gid.GID       `db:"uploader_profile_id"`
+		CreatedAt         time.Time      `db:"created_at"`
+		UpdatedAt         time.Time      `db:"updated_at"`
+		DeletedAt         *time.Time     `db:"deleted_at"`
 	}
 
 	Files []*File
@@ -58,35 +59,83 @@ func (f *File) AuthorizationAttributes(
 	conn pg.Querier,
 	resourceIDs []gid.GID,
 ) (policy.AttributesByID, error) {
-	q := `SELECT id, organization_id FROM files WHERE id = ANY(@resource_ids::text[])`
+	q := `
+SELECT
+    id,
+    organization_id,
+    uploader_profile_id
+FROM
+    files
+WHERE
+    id = ANY(@resource_ids::text[])
+`
 
-	args := pgx.StrictNamedArgs{
-		"resource_ids": resourceIDs,
-	}
-
-	rows, err := conn.Query(ctx, q, args)
+	rows, err := conn.Query(ctx, q, pgx.StrictNamedArgs{"resource_ids": resourceIDs})
 	if err != nil {
-		return nil, fmt.Errorf("cannot query authorization attributes: %w", err)
+		return nil, fmt.Errorf("cannot query file authorization attributes: %w", err)
 	}
 
 	defer rows.Close()
 
-	attrsByID := make(policy.AttributesByID)
+	attrsByID := make(policy.AttributesByID, len(resourceIDs))
+	uploaderProfileByFileID := make(map[gid.GID]*gid.GID, len(resourceIDs))
+	profileIDSet := make(map[gid.GID]struct{})
 
 	for rows.Next() {
-		var id, organizationID gid.GID
+		var (
+			id, organizationID gid.GID
+			uploaderProfileID  *gid.GID
+		)
 
-		if err := rows.Scan(&id, &organizationID); err != nil {
-			return nil, fmt.Errorf("cannot scan authorization attributes: %w", err)
+		if err := rows.Scan(&id, &organizationID, &uploaderProfileID); err != nil {
+			return nil, fmt.Errorf("cannot scan file authorization attributes: %w", err)
 		}
 
 		attrsByID[id] = policy.Attributes{
 			"organization_id": organizationID.String(),
 		}
+		uploaderProfileByFileID[id] = uploaderProfileID
+
+		if uploaderProfileID != nil {
+			profileIDSet[*uploaderProfileID] = struct{}{}
+		}
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("cannot iterate authorization attributes: %w", err)
+		return nil, fmt.Errorf("cannot iterate file authorization attributes: %w", err)
+	}
+
+	if len(profileIDSet) == 0 {
+		return attrsByID, nil
+	}
+
+	profileIDs := make([]gid.GID, 0, len(profileIDSet))
+	for profileID := range profileIDSet {
+		profileIDs = append(profileIDs, profileID)
+	}
+
+	var profile MembershipProfile
+
+	profileAttrsByID, err := profile.AuthorizationAttributes(ctx, conn, profileIDs)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load profile authorization attributes: %w", err)
+	}
+
+	identityByProfileID := make(map[gid.GID]string, len(profileAttrsByID))
+	for profileID, profileAttrs := range profileAttrsByID {
+		if identityID, ok := profileAttrs["identity_id"]; ok {
+			identityByProfileID[profileID] = identityID
+		}
+	}
+
+	for fileID, uploaderProfileID := range uploaderProfileByFileID {
+		if uploaderProfileID == nil {
+			continue
+		}
+
+		if uploaderIdentityID, ok := identityByProfileID[*uploaderProfileID]; ok {
+			attrsByID[fileID]["uploader_id"] = uploaderIdentityID
+		}
 	}
 
 	return attrsByID, nil
@@ -108,6 +157,7 @@ SELECT
     file_key,
     file_size,
     visibility,
+    uploader_profile_id,
     created_at,
     updated_at,
     deleted_at
@@ -164,6 +214,7 @@ SELECT
     file_key,
     file_size,
     visibility,
+    uploader_profile_id,
     created_at,
     updated_at,
     deleted_at
@@ -215,6 +266,7 @@ INSERT INTO
         file_key,
         file_size,
         visibility,
+        uploader_profile_id,
         created_at,
         updated_at,
         deleted_at
@@ -229,6 +281,7 @@ VALUES (
     @file_key,
     @file_size,
     @visibility,
+    @uploader_profile_id,
     @created_at,
     @updated_at,
     @deleted_at
@@ -236,18 +289,19 @@ VALUES (
 `
 
 	args := pgx.StrictNamedArgs{
-		"file_id":         f.ID,
-		"tenant_id":       scope.GetTenantID(),
-		"organization_id": f.OrganizationID,
-		"bucket_name":     f.BucketName,
-		"mime_type":       f.MimeType,
-		"file_name":       f.FileName,
-		"file_key":        f.FileKey,
-		"file_size":       f.FileSize,
-		"visibility":      f.Visibility,
-		"created_at":      f.CreatedAt,
-		"updated_at":      f.UpdatedAt,
-		"deleted_at":      f.DeletedAt,
+		"file_id":             f.ID,
+		"tenant_id":           scope.GetTenantID(),
+		"organization_id":     f.OrganizationID,
+		"bucket_name":         f.BucketName,
+		"mime_type":           f.MimeType,
+		"file_name":           f.FileName,
+		"file_key":            f.FileKey,
+		"file_size":           f.FileSize,
+		"visibility":          f.Visibility,
+		"uploader_profile_id": f.UploaderProfileID,
+		"created_at":          f.CreatedAt,
+		"updated_at":          f.UpdatedAt,
+		"deleted_at":          f.DeletedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -280,6 +334,7 @@ SELECT
     file_key,
     file_size,
     visibility,
+    uploader_profile_id,
     created_at,
     updated_at,
     deleted_at
@@ -333,6 +388,7 @@ SELECT
     file_key,
     file_size,
     visibility,
+    uploader_profile_id,
     created_at,
     updated_at,
     deleted_at
@@ -379,6 +435,7 @@ SELECT
     file_key,
     file_size,
     visibility,
+    uploader_profile_id,
     created_at,
     updated_at,
     deleted_at

@@ -31,6 +31,7 @@ import (
 	employeeportalstatics "go.probo.inc/probo/apps/employee-portal"
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/agentexecution"
+	"go.probo.inc/probo/pkg/attachment"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
@@ -100,6 +101,7 @@ type Config struct {
 	RiskManagement          *riskmanagement.Service
 	ITAM                    *itam.Service
 	Task                    *task.Service
+	Attachment              *attachment.Service
 	Cookie                  securecookie.Config
 	TokenSecret             string
 	// InstallStateKey signs the app-install state tokens the connector install
@@ -168,6 +170,7 @@ func NewServer(cfg Config) (*Server, error) {
 		RiskManagement:           cfg.RiskManagement,
 		ITAM:                     cfg.ITAM,
 		Task:                     cfg.Task,
+		Attachment:               cfg.Attachment,
 		Cookie:                   cfg.Cookie,
 		TokenSecret:              cfg.TokenSecret,
 		InstallStateKey:          cfg.InstallStateKey,

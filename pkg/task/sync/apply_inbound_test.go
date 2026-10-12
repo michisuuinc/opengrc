@@ -21,14 +21,18 @@
 package tasksync
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/internal/test"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/prosemirror"
 	"go.probo.inc/probo/pkg/task/sync/linear"
 )
 
@@ -260,7 +264,7 @@ func TestMapInboundIssue_PartialPayloadKeepsOmittedFields(t *testing.T) {
 	data, err := envelope.IssueData()
 	require.NoError(t, err)
 
-	mapped, err := mapInboundIssue(task, data)
+	mapped, err := mapInboundIssue(task, data, nil)
 	require.NoError(t, err)
 	assert.Equal(t, "Renamed", mapped.Name)
 	assert.Equal(t, content, mapped.Content)
@@ -290,7 +294,7 @@ func TestMapInboundIssue_UnsetLinearPriorityKeepsExisting(t *testing.T) {
 	require.True(t, data.Has("priority"))
 	assert.Equal(t, 0, data.Priority)
 
-	mapped, err := mapInboundIssue(task, data)
+	mapped, err := mapInboundIssue(task, data, nil)
 	require.NoError(t, err)
 	assert.Equal(t, "Renamed", mapped.Name)
 	assert.Equal(t, coredata.TaskPriorityHigh, mapped.Priority)
@@ -327,7 +331,7 @@ func TestMapInboundIssue_DescriptionHashMatchesOutboundRender(t *testing.T) {
 	data, err := envelope.IssueData()
 	require.NoError(t, err)
 
-	mapped, err := mapInboundIssue(task, data)
+	mapped, err := mapInboundIssue(task, data, nil)
 	require.NoError(t, err)
 
 	inboundHash := ContentHash(
@@ -353,6 +357,386 @@ func TestMapInboundIssue_DescriptionHashMatchesOutboundRender(t *testing.T) {
 		task.AssignedToID,
 	)
 	assert.NotEqual(t, rawHash, outboundHash)
+}
+
+func TestApplyInboundIssue_TypedAttachment(t *testing.T) {
+	t.Parallel()
+
+	t.Run("links an attachment file in the organization", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := t.Context()
+		fx := seedInboundIssueWithFile(t, coredata.FileVisibilityAttachment, true)
+
+		require.NoError(t, applyInboundAttachmentDescription(ctx, fx))
+
+		var count int
+
+		require.NoError(t, fx.client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+			return conn.QueryRow(
+				ctx,
+				`SELECT count(*) FROM attachments WHERE task_id = $1 AND file_id = $2`,
+				fx.taskID,
+				fx.fileID,
+			).Scan(&count)
+		}))
+		assert.Equal(t, 1, count)
+
+		content := taskContent(t, fx)
+		assert.Contains(t, content, fx.fileID.String())
+	})
+
+	t.Run("rejects a file from another organization", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := t.Context()
+		fx := seedInboundIssueWithFile(t, coredata.FileVisibilityAttachment, false)
+
+		err := applyInboundAttachmentDescription(ctx, fx)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "not in this organization")
+		assert.NotContains(t, taskContent(t, fx), fx.fileID.String())
+	})
+
+	t.Run("rejects a file that is not an attachment", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := t.Context()
+		fx := seedInboundIssueWithFile(t, coredata.FileVisibilityPrivate, true)
+
+		err := applyInboundAttachmentDescription(ctx, fx)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "not an attachment file")
+		assert.NotContains(t, taskContent(t, fx), fx.fileID.String())
+	})
+}
+
+type inboundIssueFixture struct {
+	client         *pg.Client
+	scope          coredata.Scoper
+	organizationID gid.GID
+	taskID         gid.GID
+	connectorID    gid.GID
+	fileID         gid.GID
+	externalID     string
+	linearOrgID    string
+}
+
+func seedInboundIssueWithFile(t *testing.T, visibility coredata.FileVisibility, fileInTaskOrg bool) inboundIssueFixture {
+	t.Helper()
+
+	ctx := t.Context()
+	client := test.PGClient(t)
+	tenantID := gid.NewTenantID()
+	organizationID := gid.New(tenantID, coredata.OrganizationEntityType)
+
+	fileOrganizationID := organizationID
+	if !fileInTaskOrg {
+		fileOrganizationID = gid.New(tenantID, coredata.OrganizationEntityType)
+	}
+
+	taskID := gid.New(tenantID, coredata.TaskEntityType)
+	connectorID := gid.New(tenantID, coredata.ConnectorEntityType)
+	fileID := gid.New(tenantID, coredata.FileEntityType)
+	now := time.Now().UTC().Truncate(time.Microsecond)
+	fx := inboundIssueFixture{
+		client:         client,
+		scope:          coredata.NewScope(tenantID),
+		organizationID: organizationID,
+		taskID:         taskID,
+		connectorID:    connectorID,
+		fileID:         fileID,
+		externalID:     "issue-" + taskID.String(),
+		linearOrgID:    "lin-" + organizationID.String(),
+	}
+
+	require.NoError(t, client.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		if _, err := tx.Exec(
+			ctx,
+			`INSERT INTO organizations (id, tenant_id, name, created_at, updated_at)
+			 VALUES ($1, $2, $3, $4, $4)`,
+			organizationID,
+			tenantID,
+			"inbound-issue-"+organizationID.String(),
+			now,
+		); err != nil {
+			return err
+		}
+
+		if fileOrganizationID != organizationID {
+			if _, err := tx.Exec(
+				ctx,
+				`INSERT INTO organizations (id, tenant_id, name, created_at, updated_at)
+				 VALUES ($1, $2, $3, $4, $4)`,
+				fileOrganizationID,
+				tenantID,
+				"inbound-issue-file-"+fileOrganizationID.String(),
+				now,
+			); err != nil {
+				return err
+			}
+		}
+
+		if _, err := tx.Exec(
+			ctx,
+			`INSERT INTO tasks (
+			     id, tenant_id, organization_id, name, content, reference_id,
+			     state, priority, rank, created_at, updated_at
+			 )
+			 VALUES (
+			     $1, $2, $3, 'links', '{"type":"doc","content":[]}'::jsonb, $4,
+			     'TODO', 'MEDIUM', 1, $5, $5
+			 )`,
+			taskID,
+			tenantID,
+			organizationID,
+			taskID.String(),
+			now,
+		); err != nil {
+			return err
+		}
+
+		if _, err := tx.Exec(
+			ctx,
+			`INSERT INTO files (
+			     id, tenant_id, organization_id, bucket_name, mime_type, file_name,
+			     file_key, file_size, visibility, created_at, updated_at
+			 )
+			 VALUES ($1, $2, $3, 'test-bucket', 'application/pdf', 'report.pdf', gen_random_uuid(), 12, $4, $5, $5)`,
+			fileID,
+			tenantID,
+			fileOrganizationID,
+			visibility,
+			now,
+		); err != nil {
+			return err
+		}
+
+		if _, err := tx.Exec(
+			ctx,
+			`INSERT INTO connectors (
+			     id, tenant_id, organization_id, provider, protocol, name,
+			     settings, encrypted_connection, created_at, updated_at
+			 )
+			 VALUES (
+			     $1, $2, $3, 'LINEAR_SYNC', 'OAUTH2', 'Linear sync',
+			     '{}', '\x', $4, $4
+			 )`,
+			connectorID,
+			tenantID,
+			organizationID,
+			now,
+		); err != nil {
+			return err
+		}
+
+		_, err := tx.Exec(
+			ctx,
+			`INSERT INTO task_external_links (
+			     task_id, tenant_id, organization_id, connector_id, provider,
+			     external_id, external_identifier, external_url, destination, origin,
+			     metadata, created_at, updated_at
+			 )
+			 VALUES (
+			     $1, $2, $3, $4, 'LINEAR_SYNC',
+			     $5, 'ENG-3', 'https://linear.app/issue/ENG-3', $6, 'PROBO',
+			     '{}', $7, $7
+			 )`,
+			taskID,
+			tenantID,
+			organizationID,
+			connectorID,
+			fx.externalID,
+			`{"linear_organization_id":"`+fx.linearOrgID+`"}`,
+			now,
+		)
+
+		return err
+	}))
+
+	t.Cleanup(func() {
+		assert.NoError(t, client.WithTx(context.Background(), func(ctx context.Context, tx pg.Tx) error {
+			task := taskID.String()
+
+			if _, err := tx.Exec(
+				ctx,
+				`DELETE FROM webhook_events
+				 WHERE webhook_data_id IN (
+				     SELECT id FROM webhook_data
+				     WHERE data->>'id' = $1 OR updated_from->>'id' = $1
+				 )`,
+				task,
+			); err != nil {
+				return err
+			}
+
+			if _, err := tx.Exec(
+				ctx,
+				`DELETE FROM webhook_data
+				 WHERE data->>'id' = $1 OR updated_from->>'id' = $1`,
+				task,
+			); err != nil {
+				return err
+			}
+
+			if _, err := tx.Exec(
+				ctx,
+				`DELETE FROM task_sync_jobs WHERE payload->>'task_id' = $1`,
+				task,
+			); err != nil {
+				return err
+			}
+
+			if _, err := tx.Exec(ctx, `DELETE FROM attachments WHERE task_id = $1`, taskID); err != nil {
+				return err
+			}
+
+			if _, err := tx.Exec(ctx, `DELETE FROM task_external_links WHERE task_id = $1`, taskID); err != nil {
+				return err
+			}
+
+			if _, err := tx.Exec(ctx, `DELETE FROM tasks WHERE id = $1`, taskID); err != nil {
+				return err
+			}
+
+			if _, err := tx.Exec(ctx, `DELETE FROM files WHERE id = $1`, fileID); err != nil {
+				return err
+			}
+
+			if _, err := tx.Exec(ctx, `DELETE FROM connectors WHERE id = $1`, connectorID); err != nil {
+				return err
+			}
+
+			if _, err := tx.Exec(ctx, `DELETE FROM organizations WHERE id = $1`, organizationID); err != nil {
+				return err
+			}
+
+			if fileOrganizationID == organizationID {
+				return nil
+			}
+
+			_, err := tx.Exec(ctx, `DELETE FROM organizations WHERE id = $1`, fileOrganizationID)
+
+			return err
+		}))
+	})
+
+	return fx
+}
+
+func applyInboundAttachmentDescription(ctx context.Context, fx inboundIssueFixture) error {
+	body, err := json.Marshal(map[string]any{
+		"action":         "update",
+		"type":           "Issue",
+		"organizationId": fx.linearOrgID,
+		"actor":          map[string]string{"id": "user-1"},
+		"data": map[string]any{
+			"id":          fx.externalID,
+			"description": "[report.pdf](" + prosemirror.AttachmentPath(fx.fileID.String()) + ")",
+			"updatedAt":   "2026-10-12T12:00:00Z",
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	envelope, err := linear.ParseEnvelope(body)
+	if err != nil {
+		return err
+	}
+
+	return (&Service{pg: fx.client}).ApplyInboundIssue(ctx, envelope)
+}
+
+func taskContent(t *testing.T, fx inboundIssueFixture) string {
+	t.Helper()
+
+	var content string
+
+	require.NoError(t, fx.client.WithConn(t.Context(), func(ctx context.Context, conn pg.Querier) error {
+		return conn.QueryRow(ctx, `SELECT content::text FROM tasks WHERE id = $1`, fx.taskID).Scan(&content)
+	}))
+
+	return content
+}
+
+func TestFinishLinearLink_TypedAttachment(t *testing.T) {
+	t.Parallel()
+
+	t.Run("links an attachment file from the Linear description", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := t.Context()
+		fx := seedInboundIssueWithFile(t, coredata.FileVisibilityAttachment, true)
+
+		require.NoError(t, finishLinearLinkWithAttachment(ctx, fx))
+
+		var count int
+
+		require.NoError(t, fx.client.WithConn(ctx, func(ctx context.Context, conn pg.Querier) error {
+			return conn.QueryRow(
+				ctx,
+				`SELECT count(*) FROM attachments WHERE task_id = $1 AND file_id = $2`,
+				fx.taskID,
+				fx.fileID,
+			).Scan(&count)
+		}))
+		assert.Equal(t, 1, count)
+		assert.Contains(t, taskContent(t, fx), fx.fileID.String())
+	})
+
+	t.Run("rejects a file from another organization", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := t.Context()
+		fx := seedInboundIssueWithFile(t, coredata.FileVisibilityAttachment, false)
+
+		err := finishLinearLinkWithAttachment(ctx, fx)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "not in this organization")
+		assert.NotContains(t, taskContent(t, fx), fx.fileID.String())
+	})
+}
+
+func finishLinearLinkWithAttachment(ctx context.Context, fx inboundIssueFixture) error {
+	description := "[report.pdf](" + prosemirror.AttachmentPath(fx.fileID.String()) + ")"
+	issue := &linear.Issue{
+		ID:          fx.externalID,
+		Identifier:  "ENG-3",
+		URL:         "https://linear.app/issue/ENG-3",
+		Title:       "From Linear",
+		Description: description,
+		UpdatedAt:   time.Now(),
+	}
+
+	content, markdown, err := linearIssueContent(issue)
+	if err != nil {
+		return err
+	}
+
+	destination, err := json.Marshal(coredata.TaskExternalLinkDestination{
+		TeamID:               "team-1",
+		LinearOrganizationID: fx.linearOrgID,
+	})
+	if err != nil {
+		return err
+	}
+
+	_, _, _, err = (&Service{pg: fx.client}).finishLinearLink(
+		ctx,
+		fx.scope,
+		&coredata.Task{ID: fx.taskID, OrganizationID: fx.organizationID},
+		&coredata.Connector{ID: fx.connectorID},
+		destination,
+		"",
+		issue,
+		content,
+		markdown,
+		"linear-attachment",
+		nil,
+	)
+
+	return err
 }
 
 func TestCommentContentHashStable(t *testing.T) {

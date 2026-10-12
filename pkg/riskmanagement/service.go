@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/attachment"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
@@ -481,6 +482,21 @@ func (s *Service) Create(ctx context.Context, scope coredata.Scoper, req CreateR
 				return fmt.Errorf("cannot insert risk assessment: %w", err)
 			}
 
+			if ra.Description != nil {
+				bound, err := attachment.Attach(ctx, tx, scope, ra.OrganizationID, ra.ID, *ra.Description)
+				if err != nil {
+					return fmt.Errorf("cannot bind description files: %w", err)
+				}
+
+				if bound != *ra.Description {
+					ra.Description = &bound
+
+					if err := ra.Update(ctx, tx, scope); err != nil {
+						return fmt.Errorf("cannot update risk assessment: %w", err)
+					}
+				}
+			}
+
 			return nil
 		},
 	)
@@ -533,6 +549,20 @@ func (s *Service) Update(ctx context.Context, scope coredata.Scoper, req UpdateR
 				description, err := optionalDocumentJSON(*req.Description)
 				if err != nil {
 					return fmt.Errorf("cannot sanitize description: %w", err)
+				}
+
+				content := ""
+				if description != nil {
+					content = *description
+				}
+
+				bound, err := attachment.Attach(ctx, tx, scope, ra.OrganizationID, ra.ID, content)
+				if err != nil {
+					return fmt.Errorf("cannot bind description files: %w", err)
+				}
+
+				if description != nil {
+					description = &bound
 				}
 
 				ra.Description = description

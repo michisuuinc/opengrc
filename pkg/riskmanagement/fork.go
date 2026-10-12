@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/attachment"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
@@ -74,6 +75,30 @@ func (s *Service) Fork(
 
 			if err := forked.Insert(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot insert forked risk analysis: %w", err)
+			}
+
+			if forked.Description != nil {
+				fileIDs, err := attachment.FileIDs(*forked.Description)
+				if err != nil {
+					return fmt.Errorf("cannot read description files: %w", err)
+				}
+
+				if err := attachment.Copy(ctx, tx, scope, source.OrganizationID, source.ID, forked.ID, fileIDs); err != nil {
+					return fmt.Errorf("cannot copy description files: %w", err)
+				}
+
+				bound, err := attachment.Attach(ctx, tx, scope, forked.OrganizationID, forked.ID, *forked.Description)
+				if err != nil {
+					return fmt.Errorf("cannot bind description files: %w", err)
+				}
+
+				if bound != *forked.Description {
+					forked.Description = &bound
+
+					if err := forked.Update(ctx, tx, scope); err != nil {
+						return fmt.Errorf("cannot update risk assessment: %w", err)
+					}
+				}
 			}
 
 			idMap := make(map[gid.GID]gid.GID)

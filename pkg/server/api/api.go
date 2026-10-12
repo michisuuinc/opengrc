@@ -32,6 +32,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/agentexecution"
+	"go.probo.inc/probo/pkg/attachment"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
@@ -105,6 +106,7 @@ type (
 		RiskManagement          *riskmanagement.Service
 		ITAM                    *itam.Service
 		Task                    *task.Service
+		Attachment              *attachment.Service
 		Cookie                  securecookie.Config
 		TokenSecret             string
 		// InstallStateKey signs the app-install state tokens the connector
@@ -145,12 +147,13 @@ type (
 )
 
 var (
-	ErrMissingProboService   = errors.New("server configuration requires a valid probo.Service instance")
-	ErrMissingIAMService     = errors.New("server configuration requires a valid iam.Service instance")
-	ErrMissingSlackService   = errors.New("server configuration requires a valid slack.Service instance")
-	ErrMissingITAMService    = errors.New("server configuration requires a valid itam.Service instance")
-	ErrMissingTaskService    = errors.New("server configuration requires a valid task.Service instance")
-	ErrMissingMailmanService = errors.New("server configuration requires a valid mailman.Service instance")
+	ErrMissingProboService      = errors.New("server configuration requires a valid probo.Service instance")
+	ErrMissingIAMService        = errors.New("server configuration requires a valid iam.Service instance")
+	ErrMissingSlackService      = errors.New("server configuration requires a valid slack.Service instance")
+	ErrMissingITAMService       = errors.New("server configuration requires a valid itam.Service instance")
+	ErrMissingTaskService       = errors.New("server configuration requires a valid task.Service instance")
+	ErrMissingAttachmentService = errors.New("server configuration requires a valid attachment.Service instance")
+	ErrMissingMailmanService    = errors.New("server configuration requires a valid mailman.Service instance")
 )
 
 func methodNotAllowed(w http.ResponseWriter, r *http.Request) {
@@ -196,6 +199,10 @@ func NewServer(cfg Config) (*Server, error) {
 
 	if cfg.Task == nil {
 		return nil, ErrMissingTaskService
+	}
+
+	if cfg.Attachment == nil {
+		return nil, ErrMissingAttachmentService
 	}
 
 	if cfg.Mailman == nil {
@@ -296,6 +303,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.GraphQLLimits,
 			cfg.ITAM,
 			cfg.Task,
+			cfg.Attachment,
 			cfg.IdentityFederationIssuer,
 			cfg.AWSConnectorInstall,
 			cfg.GCPConnectorInstall,
@@ -310,6 +318,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.Logger.Named("files.v1"),
 			cfg.File,
 			cfg.Probo,
+			cfg.Attachment,
 			cfg.IAM,
 			cfg.Cookie,
 			cfg.TokenSecret,
@@ -329,6 +338,7 @@ func NewServer(cfg Config) (*Server, error) {
 			cfg.RiskManagement,
 			cfg.ITAM,
 			cfg.Task,
+			cfg.Attachment,
 			cfg.Mailman,
 			cfg.TokenSecret,
 			cfg.File,

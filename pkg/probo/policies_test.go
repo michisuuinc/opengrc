@@ -24,6 +24,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"go.probo.inc/probo/pkg/attachment"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/iam/policy"
 	"go.probo.inc/probo/pkg/probo"
@@ -105,4 +106,84 @@ func TestAuditorPolicy_OrganizationContextReadAccess(t *testing.T) {
 	)
 
 	assert.True(t, result.IsAllowed())
+}
+
+func TestOwnerAndAdminCanOnlyCreateTheirOwnAttachment(t *testing.T) {
+	t.Parallel()
+
+	organizationID := gid.New(gid.NewTenantID(), 1)
+	uploaderID := gid.New(gid.NewTenantID(), 51)
+	otherID := gid.New(gid.NewTenantID(), 51)
+	fileID := gid.New(gid.NewTenantID(), 25)
+	evaluator := policy.NewEvaluator()
+
+	tests := []struct {
+		name      string
+		role      *policy.Policy
+		principal gid.GID
+		uploader  string
+		want      bool
+	}{
+		{
+			name:      "owner creates own attachment",
+			role:      probo.OwnerPolicy,
+			principal: uploaderID,
+			uploader:  uploaderID.String(),
+			want:      true,
+		},
+		{
+			name:      "owner creates another attachment",
+			role:      probo.OwnerPolicy,
+			principal: otherID,
+			uploader:  uploaderID.String(),
+			want:      false,
+		},
+		{
+			name:      "admin creates own attachment",
+			role:      probo.AdminPolicy,
+			principal: uploaderID,
+			uploader:  uploaderID.String(),
+			want:      true,
+		},
+		{
+			name:      "admin creates another attachment",
+			role:      probo.AdminPolicy,
+			principal: otherID,
+			uploader:  uploaderID.String(),
+			want:      false,
+		},
+		{
+			name:      "owner creates an attachment with no uploader",
+			role:      probo.OwnerPolicy,
+			principal: uploaderID,
+			want:      false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			result := evaluator.Evaluate(
+				policy.AuthorizationRequest{
+					Principal: tt.principal,
+					Resource:  fileID,
+					Action:    attachment.ActionCreate,
+					ConditionContext: policy.ConditionContext{
+						Principal: map[string]string{
+							"id":              tt.principal.String(),
+							"organization_id": organizationID.String(),
+						},
+						Resource: map[string]string{
+							"organization_id": organizationID.String(),
+							"uploader_id":     tt.uploader,
+						},
+					},
+				},
+				[]*policy.Policy{tt.role},
+			)
+
+			assert.Equal(t, tt.want, result.IsAllowed())
+		})
+	}
 }

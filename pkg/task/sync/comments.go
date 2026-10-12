@@ -32,6 +32,7 @@ import (
 
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/attachment"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -80,12 +81,35 @@ func (s *Service) copyTaskCommentsToLinear(
 			continue
 		}
 
+		description, files, changed, err := s.embedLinearDescription(
+			ctx,
+			client,
+			scope,
+			link.ConnectorID,
+			link.ExternalID,
+			comment.OrganizationID,
+			comment.ID,
+			link.TaskID,
+			markdown,
+			comment.Content,
+		)
+		if err != nil {
+			return createdIDs, fmt.Errorf("cannot embed Linear files for comment %q: %w", comment.ID, err)
+		}
+
+		if changed {
+			link.Metadata, err = mergeAttachments(link.Metadata, files)
+			if err != nil {
+				return createdIDs, fmt.Errorf("cannot merge Linear attachments for comment %q: %w", comment.ID, err)
+			}
+		}
+
 		author, err := s.commentAuthor(ctx, scope, comment.OwnerID)
 		if err != nil {
 			return createdIDs, fmt.Errorf("cannot load Linear comment author for %q: %w", comment.ID, err)
 		}
 
-		created, err := client.CreateComment(ctx, link.ExternalID, markdown, author)
+		created, err := client.CreateComment(ctx, link.ExternalID, description, author)
 		if err != nil {
 			return createdIDs, fmt.Errorf("cannot create Linear comment for %q: %w", comment.ID, err)
 		}
@@ -433,9 +457,11 @@ func (s *Service) applyInboundCommentTx(
 		return nil
 	}
 
-	content, canonical, err := inboundCommentContent(data.Body)
+	body := restoreLinearFiles(data.Body, attachmentsFromMetadata(link.Metadata))
+
+	content, canonical, err := inboundCommentContent(body)
 	if err != nil {
-		return err
+		return fmt.Errorf("cannot read Linear comment: %w", err)
 	}
 
 	if strings.TrimSpace(canonical) == "" {
@@ -772,8 +798,70 @@ func (h *outboundHandler) processCommentUpsert(
 		}
 
 		hash := CommentContentHash(markdown)
+		loaded := false
+
+		var known map[string]string
+
 		if mapping != nil && mapping.ContentHash != nil && *mapping.ContentHash == hash {
-			return h.succeed(ctx, item)
+			ids, err := attachment.FileIDs(comment.Content)
+			if err != nil {
+				return fmt.Errorf("cannot read comment attachment file ids: %w", err)
+			}
+
+			if len(ids) == 0 {
+				return h.succeed(ctx, item)
+			}
+
+			known, err = h.svc.linearAttachments(ctx, scope, payload.TaskID)
+			if err != nil {
+				return fmt.Errorf("cannot load Linear attachments: %w", err)
+			}
+
+			loaded = true
+
+			missing, err := linearFilesMissing(known, comment.Content)
+			if err != nil {
+				return fmt.Errorf("cannot read comment attachment file ids: %w", err)
+			}
+
+			if !missing {
+				return h.succeed(ctx, item)
+			}
+		}
+
+		var description string
+
+		if loaded {
+			description, _, _, err = h.svc.embedKnownLinearDescription(
+				ctx,
+				client,
+				scope,
+				payload.ConnectorID,
+				payload.ExternalID,
+				comment.OrganizationID,
+				comment.ID,
+				payload.TaskID,
+				markdown,
+				comment.Content,
+				known,
+			)
+		} else {
+			description, _, _, err = h.svc.embedLinearDescription(
+				ctx,
+				client,
+				scope,
+				payload.ConnectorID,
+				payload.ExternalID,
+				comment.OrganizationID,
+				comment.ID,
+				payload.TaskID,
+				markdown,
+				comment.Content,
+			)
+		}
+
+		if err != nil {
+			return err
 		}
 
 		created := mapping == nil
@@ -786,12 +874,12 @@ func (h *outboundHandler) processCommentUpsert(
 				return fmt.Errorf("cannot load Linear comment author: %w", err)
 			}
 
-			remote, err = client.CreateComment(ctx, payload.ExternalID, markdown, author)
+			remote, err = client.CreateComment(ctx, payload.ExternalID, description, author)
 			if err != nil {
 				return fmt.Errorf("cannot create Linear comment: %w", err)
 			}
 		} else {
-			remote, err = client.UpdateComment(ctx, mapping.ExternalID, markdown)
+			remote, err = client.UpdateComment(ctx, mapping.ExternalID, description)
 			if err != nil {
 				return fmt.Errorf("cannot update Linear comment: %w", err)
 			}

@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/attachment"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
@@ -46,7 +47,21 @@ type (
 		OwnerID **gid.GID
 		Content **string
 	}
+
+	// ErrUnauthorizedCommentFiles is a create check that failed for a file the
+	// locked comment does not already reference.
+	ErrUnauthorizedCommentFiles struct {
+		err error
+	}
 )
+
+func (e *ErrUnauthorizedCommentFiles) Error() string {
+	return e.err.Error()
+}
+
+func (e *ErrUnauthorizedCommentFiles) Unwrap() error {
+	return e.err
+}
 
 func (req *CreateTaskCommentRequest) Validate() error {
 	v := validator.New()
@@ -224,6 +239,19 @@ func (s *Service) CreateComment(
 				return fmt.Errorf("cannot insert task comment: %w", err)
 			}
 
+			bound, err := attachment.Attach(ctx, conn, scope, taskComment.OrganizationID, taskComment.ID, taskComment.Content)
+			if err != nil {
+				return fmt.Errorf("cannot bind task comment files: %w", err)
+			}
+
+			if bound != taskComment.Content {
+				taskComment.Content = bound
+
+				if err := taskComment.Update(ctx, conn, scope); err != nil {
+					return fmt.Errorf("cannot update task comment: %w", err)
+				}
+			}
+
 			if err := emitTaskCommentCreated(ctx, conn, scope, taskComment); err != nil {
 				return fmt.Errorf("cannot emit task comment created webhook: %w", err)
 			}
@@ -245,8 +273,10 @@ func (s *Service) CreateComment(
 }
 
 func (s *Service) UpdateComment(
-	ctx context.Context, scope coredata.Scoper,
+	ctx context.Context,
+	scope coredata.Scoper,
 	req UpdateTaskCommentRequest,
+	authorizeNewFiles func(context.Context, []gid.GID) error,
 ) (*coredata.TaskComment, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
@@ -257,7 +287,7 @@ func (s *Service) UpdateComment(
 	err := s.pg.WithTx(
 		ctx,
 		func(ctx context.Context, conn pg.Tx) error {
-			if err := taskComment.LoadByID(ctx, conn, scope, req.ID); err != nil {
+			if err := taskComment.LoadByIDForUpdate(ctx, conn, scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load task comment: %w", err)
 			}
 
@@ -282,7 +312,34 @@ func (s *Service) UpdateComment(
 					return fmt.Errorf("cannot sanitize task comment content: %w", err)
 				}
 
-				taskComment.Content = content
+				fresh, err := attachment.UnattachedFileIDs(
+					ctx,
+					conn,
+					scope,
+					taskComment.OrganizationID,
+					taskComment.ID,
+					content,
+				)
+				if err != nil {
+					return err
+				}
+
+				if len(fresh) > 0 {
+					if authorizeNewFiles == nil {
+						return fmt.Errorf("cannot authorize task comment files")
+					}
+
+					if err := authorizeNewFiles(ctx, fresh); err != nil {
+						return &ErrUnauthorizedCommentFiles{err: err}
+					}
+				}
+
+				bound, err := attachment.Attach(ctx, conn, scope, taskComment.OrganizationID, taskComment.ID, content)
+				if err != nil {
+					return fmt.Errorf("cannot bind task comment files: %w", err)
+				}
+
+				taskComment.Content = bound
 			}
 
 			taskComment.UpdatedAt = time.Now()

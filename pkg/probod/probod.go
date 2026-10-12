@@ -50,6 +50,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/agentexecution"
+	"go.probo.inc/probo/pkg/attachment"
 	"go.probo.inc/probo/pkg/awsconfig"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/bot"
@@ -894,6 +895,17 @@ func (impl *Implm) Run(
 		baseURL.String(),
 		linearAPIBaseURL,
 		l.Named("task"),
+		fileManagerService,
+	)
+
+	attachmentService := attachment.NewService(
+		pgClient,
+		attachment.ParentReadActions{
+			DocumentVersion: probo.ActionDocumentVersionGet,
+			Task:            task.ActionTaskGet,
+			TaskComment:     task.ActionTaskCommentGet,
+			RiskAnalysis:    riskmanagement.ActionRiskAnalysisGet,
+		},
 	)
 
 	itamService := itam.NewService(
@@ -1019,6 +1031,7 @@ func (impl *Implm) Run(
 			RiskManagement:          riskManagementService,
 			ITAM:                    itamService,
 			Task:                    taskService,
+			Attachment:              attachmentService,
 			Slack:                   slackService,
 			BotDeliveryDestinations: slackMessages,
 			ComplianceMessages:      complianceMessages,

@@ -26,6 +26,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/accessreview"
 	"go.probo.inc/probo/pkg/agentexecution"
+	"go.probo.inc/probo/pkg/attachment"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/certmanager"
 	cloudaws "go.probo.inc/probo/pkg/cloud/aws"
@@ -78,6 +79,7 @@ func NewGraphQLHandler(
 	limits gqlutils.Limits,
 	itamSvc *itam.Service,
 	taskSvc *task.Service,
+	attachmentSvc *attachment.Service,
 	probotIdentityBindings *identitybinding.Service,
 	slackbotInstallations *slackchannel.InstallationService,
 	botDeliveryDestinations BotDeliveryDestinations,
@@ -111,6 +113,7 @@ func NewGraphQLHandler(
 			baseURL:                 baseURL,
 			itam:                    itamSvc,
 			task:                    taskSvc,
+			attachment:              attachmentSvc,
 			logger:                  logger,
 			identityFederation:      identityFederation,
 			awsConnectorInstall:     awsConnectorInstall,
