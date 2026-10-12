@@ -664,6 +664,18 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 				UpdatedAt: version.UpdatedAt,
 			}, nil
 		}
+	case coredata.NotificationEntityType:
+		action = probo.ActionNotificationGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			identity := authn.IdentityFromContext(ctx)
+
+			notification, err := r.probo.GetNotification(ctx, scope, id, identity.ID)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewNotification(notification)
+		}
 	default:
 	}
 

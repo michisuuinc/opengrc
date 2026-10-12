@@ -39,4 +39,16 @@ type Viewer {
 
     probotIdentityBindings: [ProbotIdentityBinding!]!
         @goField(forceResolver: true)
+
+    notifications(
+        organizationId: ID!
+        types: [NotificationType!]
+        first: Int
+        after: CursorKey
+    ): NotificationConnection! @goField(forceResolver: true)
+
+    notificationUnreadCount(
+        organizationId: ID!
+        types: [NotificationType!]
+    ): Int! @goField(forceResolver: true)
 }

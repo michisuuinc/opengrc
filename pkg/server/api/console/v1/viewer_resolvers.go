@@ -220,6 +220,87 @@ func (r *viewerResolver) ProbotIdentityBindings(ctx context.Context, obj *types.
 	return types.NewProbotIdentityBindings(bindings), nil
 }
 
+// Notifications is the resolver for the notifications field.
+func (r *viewerResolver) Notifications(ctx context.Context, obj *types.Viewer, organizationID gid.GID, notificationTypes []coredata.NotificationType, first *int, after *page.CursorKey) (*types.NotificationConnection, error) {
+	scope, err := r.authorize(ctx, organizationID, probo.ActionNotificationList)
+	if err != nil {
+		return nil, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	if first == nil {
+		first = new(20)
+	}
+
+	cursor := types.NewCursor(
+		first,
+		after,
+		nil,
+		nil,
+		page.OrderBy[coredata.NotificationOrderField]{
+			Field:     coredata.NotificationOrderFieldCreatedAt,
+			Direction: page.OrderDirectionDesc,
+		},
+	)
+
+	notifications, err := r.probo.ListNotifications(
+		ctx,
+		scope,
+		organizationID,
+		identity.ID,
+		cursor,
+		notificationTypes,
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot list notifications", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	connection, err := types.NewNotificationConnection(notifications)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list notifications", log.Error(err))
+
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return connection, nil
+}
+
+// NotificationUnreadCount is the resolver for the notificationUnreadCount field.
+func (r *viewerResolver) NotificationUnreadCount(ctx context.Context, obj *types.Viewer, organizationID gid.GID, notificationTypes []coredata.NotificationType) (int, error) {
+	scope, err := r.authorize(ctx, organizationID, probo.ActionNotificationList)
+	if err != nil {
+		return 0, err
+	}
+
+	identity := authn.IdentityFromContext(ctx)
+
+	count, err := r.probo.CountUnreadNotifications(
+		ctx,
+		scope,
+		organizationID,
+		identity.ID,
+		notificationTypes,
+	)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return 0, gqlutils.NotFound(ctx, err)
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot count unread notifications", log.Error(err))
+
+		return 0, gqlutils.Internal(ctx)
+	}
+
+	return count, nil
+}
+
 // Viewer returns schema.ViewerResolver implementation.
 func (r *Resolver) Viewer() schema.ViewerResolver { return &viewerResolver{r} }
 

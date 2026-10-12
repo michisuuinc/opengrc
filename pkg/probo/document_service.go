@@ -45,6 +45,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/mail"
+	"go.probo.inc/probo/pkg/notification"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/pdfutils"
 	"go.probo.inc/probo/pkg/prosemirror"
@@ -1136,6 +1137,26 @@ func (s *DocumentService) createSignatureRequestInTx(
 
 	if err := documentVersionSignature.Insert(ctx, tx, scope); err != nil {
 		return nil, false, fmt.Errorf("cannot insert document version signature: %w", err)
+	}
+
+	document := &coredata.Document{}
+	if err := document.LoadByID(ctx, tx, scope, documentVersion.DocumentID); err != nil {
+		return nil, false, fmt.Errorf("cannot load document: %w", err)
+	}
+
+	if err := notification.Insert(
+		ctx,
+		tx,
+		scope,
+		notification.InsertRequest{
+			OrganizationID:     document.OrganizationID,
+			RecipientProfileID: signatory.ID,
+			Type:               coredata.NotificationTypeDocumentSignatureRequested,
+			SubjectID:          document.ID,
+			Title:              document.Title,
+		},
+	); err != nil {
+		return nil, false, fmt.Errorf("cannot insert signature notification: %w", err)
 	}
 
 	return documentVersionSignature, true, nil

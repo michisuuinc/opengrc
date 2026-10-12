@@ -30,6 +30,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/notification"
 	"go.probo.inc/probo/pkg/timespan"
 )
 
@@ -68,6 +69,21 @@ func repeatLockedRecurringTask(
 
 	if err := InsertCreatedActivity(ctx, conn, scope, next, nil, now); err != nil {
 		return nil, fmt.Errorf("cannot record next task created event: %w", err)
+	}
+
+	if next.AssignedToID != nil {
+		if err := notification.InsertTaskAssignment(
+			ctx,
+			conn,
+			scope,
+			next.OrganizationID,
+			next.ID,
+			next.Name,
+			*next.AssignedToID,
+			nil,
+		); err != nil {
+			return nil, err
+		}
 	}
 
 	if err := emitTaskCreated(ctx, conn, scope, next); err != nil {

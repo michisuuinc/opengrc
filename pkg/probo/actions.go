@@ -151,6 +151,11 @@ const (
 	ActionEmployeeDocumentList             = "core:employee-document:list"
 	ActionEmployeeDocumentVersionExportPDF = "core:employee-document-version:export-pdf"
 
+	// Notification actions
+	ActionNotificationGet    = "core:notification:get"
+	ActionNotificationList   = "core:notification:list"
+	ActionNotificationUpdate = "core:notification:update"
+
 	// DocumentVersionSignature actions
 	ActionDocumentVersionSignatureRequest = "core:document-version-signature:request"
 	ActionDocumentVersionCancelSignature  = "core:document-version-signature:cancel"

@@ -32,6 +32,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/mail"
+	"go.probo.inc/probo/pkg/notification"
 	"go.probo.inc/probo/pkg/task/sync/linear"
 	"go.probo.inc/probo/pkg/webhook"
 )
@@ -173,6 +174,28 @@ func (s *Service) ApplyInboundIssue(
 				now,
 			); err != nil {
 				return err
+			}
+
+			assigneeChanged := task.AssignedToID != nil &&
+				(oldTask.AssignedToID == nil || *oldTask.AssignedToID != *task.AssignedToID)
+			if assigneeChanged {
+				actorID, err := inboundActivityActorID(ctx, tx, scope, link.OrganizationID, envelope.Actor)
+				if err != nil {
+					return fmt.Errorf("cannot resolve Linear activity actor: %w", err)
+				}
+
+				if err := notification.InsertTaskAssignment(
+					ctx,
+					tx,
+					scope,
+					task.OrganizationID,
+					task.ID,
+					task.Name,
+					*task.AssignedToID,
+					actorID,
+				); err != nil {
+					return err
+				}
 			}
 
 			internalControlIDs, err := (coredata.InternalControlTask{}).LoadInternalControlIDsByTaskID(ctx, tx, scope, task.ID)

@@ -109,6 +109,10 @@ var ViewerPolicy = policy.NewPolicy(
 		ActionEmployeeDocumentGet, ActionEmployeeDocumentList,
 		ActionEmployeeDocumentVersionExportPDF,
 	).WithSID("employee-document-access").When(organizationCondition),
+
+	policy.Allow(
+		ActionNotificationGet, ActionNotificationList, ActionNotificationUpdate,
+	).WithSID("notification-access").When(organizationCondition),
 ).WithDescription("Read-only probo access for organization viewers")
 
 // AuditorPolicy defines permissions for auditor role.
@@ -166,6 +170,10 @@ var AuditorPolicy = policy.NewPolicy(
 		ActionEmployeeDocumentGet, ActionEmployeeDocumentList,
 		ActionEmployeeDocumentVersionExportPDF,
 	).WithSID("employee-document-access").When(organizationCondition),
+
+	policy.Allow(
+		ActionNotificationGet, ActionNotificationList, ActionNotificationUpdate,
+	).WithSID("notification-access").When(organizationCondition),
 ).WithDescription("Read-only probo access for auditors (excludes internal/employee content)")
 
 // CommonThirdPartyCatalogPolicy grants every authenticated identity
@@ -216,6 +224,10 @@ var EmployeePolicy = policy.NewPolicy(
 		ActionDocumentVersionApprove,
 		ActionDocumentVersionReject,
 	).WithSID("document-version-approval").When(organizationCondition),
+
+	policy.Allow(
+		ActionNotificationGet, ActionNotificationList, ActionNotificationUpdate,
+	).WithSID("notification-access").When(organizationCondition),
 ).WithDescription("Employee access - can sign documents, approve documents, and view internal content")
 
 // CompliancePortalManagerPolicy defines permissions needed to manage the
@@ -241,6 +253,10 @@ var CompliancePortalManagerPolicy = policy.NewPolicy(
 		ActionSlackConnectionList, ActionConnectorList, ActionConnectorGet,
 		ActionConnectorInitiate, ActionConnectorDelete,
 	).WithSID("compliance-portal-related-access").When(organizationCondition),
+
+	policy.Allow(
+		ActionNotificationGet, ActionNotificationList, ActionNotificationUpdate,
+	).WithSID("notification-access").When(organizationCondition),
 ).WithDescription("Access required to manage the compliance portal and related entity visibility")
 
 // CompliancePortalAccessManagerPolicy defines permissions needed to review and
@@ -268,6 +284,10 @@ var CompliancePortalAccessManagerPolicy = policy.NewPolicy(
 		ActionFileGet,
 		ActionElectronicSignatureGet,
 	).WithSID("compliance-portal-access-related").When(organizationCondition),
+
+	policy.Allow(
+		ActionNotificationGet, ActionNotificationList, ActionNotificationUpdate,
+	).WithSID("notification-access").When(organizationCondition),
 ).WithDescription("Organization-scoped read of entities that portal access requests may reference")
 
 // ProboPolicySet returns the PolicySet for the probo service.
