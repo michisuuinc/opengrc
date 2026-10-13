@@ -180,6 +180,7 @@ var (
 		{Name: "匿名加工情報・仮名加工情報", Values: []string{"扱わない", "扱う"}, Default: "扱わない"},
 		{Name: "認定個人情報保護団体", Values: []string{"加入していない", "加入している"}, Default: "加入していない"},
 		{Name: "手数料", Values: []string{"なし", "あり"}, Default: "なし"},
+		{Name: "事務所の仕切り", Values: []string{"あり", "なし"}, Default: "あり"},
 	}
 
 	// DefaultPurposes is used when the configuration has no 利用目的.
