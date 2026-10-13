@@ -13,13 +13,19 @@ grc.michisuu.com {
 		format json
 	}
 	encode zstd gzip
+	# probod already sends HSTS, CSP, X-Frame-Options, nosniff,
+	# Referrer-Policy and Permissions-Policy; only hide server details.
 	header {
-		Strict-Transport-Security "max-age=31536000"
-		X-Content-Type-Options "nosniff"
-		X-Frame-Options "DENY"
-		Referrer-Policy "strict-origin-when-cross-origin"
-		Permissions-Policy "camera=(), microphone=(), geolocation=()"
 		-Server
+		-Via
+		defer
 	}
 	reverse_proxy probo:8080
+}
+
+# probod always exports OpenTelemetry traces (there is no switch to turn
+# them off). Accept and discard them on the internal network so they do
+# not fill the logs with export errors. Port 4318 is not published.
+http://:4318 {
+	respond 200
 }

@@ -27,7 +27,9 @@ apt-get purge -y openssh-server ec2-instance-connect || true
 
 apt-get update
 apt-get upgrade -y
-apt-get install -y docker.io docker-compose-v2 git unattended-upgrades
+# fonts-noto-cjk: the headless Chrome image has no Japanese fonts; they are
+# mounted into the chrome container (compose.yaml) so PDFs render Japanese.
+apt-get install -y docker.io docker-compose-v2 git unattended-upgrades fonts-noto-cjk
 systemctl enable --now docker
 snap install aws-cli --classic
 
