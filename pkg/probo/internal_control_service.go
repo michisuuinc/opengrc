@@ -643,6 +643,8 @@ func (s InternalControlService) Import(
 						evidence := &coredata.Evidence{
 							State:             coredata.EvidenceStateRequested,
 							ID:                evidenceID,
+							OrganizationID:    internalControl.OrganizationID,
+							InternalControlID: internalControl.ID,
 							TaskID:            &task.ID,
 							ReferenceID:       req.InternalControls[i].Tasks[j].RequestedEvidences[k].ReferenceID,
 							Type:              req.InternalControls[i].Tasks[j].RequestedEvidences[k].Type,
