@@ -31,7 +31,6 @@ SPDX-License-Identifier: MIT
 | 内部統制 | `apps/console/public/data/internal-controls/jp/` | Pマークと ISO 27001 に紐付けた内部統制 39 件 | [#1](https://github.com/michisuuinc/opengrc/pull/1)、[#3](https://github.com/michisuuinc/opengrc/pull/3) |
 | 文書 | `docs/ja/` | 訳語表（`glossary.md`）、用語解説（`terms.md`）、この一覧、Pマークの方針・規程・公表文・書式のひな形（`templates/`、18 本） | [#1](https://github.com/michisuuinc/opengrc/pull/1)、[#5](https://github.com/michisuuinc/opengrc/pull/5) ほか |
 | チェック | `scripts/i18n/`、`.github/workflows/i18n-check.yaml` | 翻訳ファイル・フレームワーク・内部統制のデータが英語版や取り込み形式と食い違っていないかの検査 | [#1](https://github.com/michisuuinc/opengrc/pull/1)、[#3](https://github.com/michisuuinc/opengrc/pull/3) |
-| 社内運用環境 | `deploy/aws-ec2/` | AWS EC2 への構築一式と手順書 | [#4](https://github.com/michisuuinc/opengrc/pull/4) |
 
 ## リポジトリの設定（コード以外）
 
@@ -60,4 +59,3 @@ PR をマージする前に、次を確認します。
 - [ ] CI の `i18n-check` が通ったか。失敗したら、上流で追加・変更された英語のキーを日本語に訳す（`node scripts/i18n/check-locales.mjs` で場所がわかる）
 - [ ] 上流でフレームワークの英語版（`ISO27001-2022.json` など）が変わっていないか。変わっていれば日本語版も合わせる（`node scripts/i18n/check-frameworks.mjs`）
 - [ ] Go のコードが変わっている場合は、手元で E2E テストを実行したか（フォークでは Go の CI が動かないため。`TZ=UTC` を付けて実行する）
-- [ ] マージ後、本番に反映する場合は `deploy/aws-ec2/README.md` の「更新」の手順に従う
