@@ -115,6 +115,7 @@ INSERT INTO
     evidences (
         tenant_id,
         id,
+        organization_id,
         internal_control_id,
         task_id,
         reference_id,
@@ -131,6 +132,7 @@ INSERT INTO
 VALUES (
     @tenant_id,
     @evidence_id,
+    @organization_id,
     @internal_control_id,
     @task_id,
     @reference_id,
@@ -154,6 +156,7 @@ WHERE evidences.state = 'REQUESTED';
 	args := pgx.StrictNamedArgs{
 		"tenant_id":                         scope.GetTenantID(),
 		"evidence_id":                       e.ID,
+		"organization_id":                   e.OrganizationID,
 		"internal_control_id":               e.InternalControlID,
 		"task_id":                           e.TaskID,
 		"reference_id":                      e.ReferenceID,

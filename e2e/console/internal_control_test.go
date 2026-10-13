@@ -2117,3 +2117,124 @@ func TestMeasure_ThirdPartyMapping(t *testing.T) {
 		require.Error(t, err, "should not link a third party from another tenant")
 	})
 }
+
+func TestInternalControl_ImportWithRequestedEvidences(t *testing.T) {
+	t.Parallel()
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	suffix := owner.GetOrganizationID()
+
+	payload := fmt.Sprintf(
+		`[{
+			"name": "Imported internal control with evidences",
+			"category": "Security",
+			"reference-id": "ic-evidence-%[1]s",
+			"tasks": [{
+				"name": "Collect records",
+				"description": "Collect the records requested by auditors",
+				"reference-id": "task-evidence-%[1]s",
+				"requested-evidences": [
+					{"reference-id": "evidence-file-%[1]s", "type": "FILE", "name": "Training records"},
+					{"reference-id": "evidence-link-%[1]s", "type": "LINK", "name": "Published policy"}
+				]
+			}]
+		}]`,
+		suffix,
+	)
+
+	query := `
+		mutation ImportInternalControl($input: ImportInternalControlInput!) {
+			importInternalControl(input: $input) {
+				internalControlEdges {
+					node {
+						id
+						tasks(first: 10) {
+							edges {
+								node {
+									id
+									evidences(first: 10) {
+										edges {
+											node {
+												id
+												state
+												type
+												description
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	`
+
+	var result struct {
+		ImportInternalControl struct {
+			InternalControlEdges []struct {
+				Node struct {
+					Tasks struct {
+						Edges []struct {
+							Node struct {
+								Evidences struct {
+									Edges []struct {
+										Node struct {
+											ID          string  `json:"id"`
+											State       string  `json:"state"`
+											Type        string  `json:"type"`
+											Description *string `json:"description"`
+										} `json:"node"`
+									} `json:"edges"`
+								} `json:"evidences"`
+							} `json:"node"`
+						} `json:"edges"`
+					} `json:"tasks"`
+				} `json:"node"`
+			} `json:"internalControlEdges"`
+		} `json:"importInternalControl"`
+	}
+
+	importFile := func() {
+		t.Helper()
+
+		err := owner.ExecuteWithFile(
+			query,
+			map[string]any{
+				"input": map[string]any{
+					"organizationId": owner.GetOrganizationID(),
+					"file":           nil,
+				},
+			},
+			"input.file",
+			testutil.UploadFile{
+				Filename:    "internalControls.json",
+				ContentType: "application/json",
+				Content:     []byte(payload),
+			},
+			&result,
+		)
+		require.NoError(t, err)
+		require.Len(t, result.ImportInternalControl.InternalControlEdges, 1)
+	}
+
+	importFile()
+	// Importing the same file again must update the requested evidences
+	// in place instead of duplicating them.
+	importFile()
+
+	tasks := result.ImportInternalControl.InternalControlEdges[0].Node.Tasks.Edges
+	require.Len(t, tasks, 1)
+
+	evidences := tasks[0].Node.Evidences.Edges
+	require.Len(t, evidences, 2)
+
+	byType := map[string]string{}
+	for _, edge := range evidences {
+		assert.Equal(t, "REQUESTED", edge.Node.State)
+		require.NotNil(t, edge.Node.Description)
+		byType[edge.Node.Type] = *edge.Node.Description
+	}
+
+	assert.Equal(t, map[string]string{"FILE": "Training records", "LINK": "Published policy"}, byType)
+}
