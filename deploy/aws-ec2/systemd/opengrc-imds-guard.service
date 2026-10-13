@@ -1,0 +1,16 @@
+# Copyright (c) 2026 MICHISUU Inc.
+# SPDX-License-Identifier: MIT
+
+[Unit]
+Description=Restrict instance metadata access to the probo container
+Requires=docker.service
+After=docker.service
+PartOf=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/opt/opengrc/src/deploy/aws-ec2/imds-guard.sh
+
+[Install]
+WantedBy=docker.service

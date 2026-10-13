@@ -1,0 +1,13 @@
+# Copyright (c) 2026 MICHISUU Inc.
+# SPDX-License-Identifier: MIT
+
+[Unit]
+Description=Daily opengrc database backup
+
+[Timer]
+# 02:30 JST (instance clock is UTC)
+OnCalendar=*-*-* 17:30:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

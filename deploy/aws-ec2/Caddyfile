@@ -1,0 +1,25 @@
+# Copyright (c) 2026 MICHISUU Inc.
+# SPDX-License-Identifier: MIT
+
+{
+	# Let's Encrypt account contact (certificate expiry notices).
+	email info@michisuu.com
+}
+
+grc.michisuu.com {
+	# Access log as JSON on stdout -> CloudWatch Logs (/opengrc/containers).
+	log {
+		output stdout
+		format json
+	}
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
+	reverse_proxy probo:8080
+}
