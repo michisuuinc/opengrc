@@ -98,6 +98,11 @@ services:
     shm_size: "1gb"
     networks:
       - "render"
+    volumes:
+      # The image only ships DejaVu fonts, so Japanese text in PDFs would
+      # render as empty boxes. Use the host's Ubuntu fonts-noto-cjk package
+      # (kept up to date by unattended-upgrades), read-only.
+      - "/usr/share/fonts/opentype/noto:/usr/share/fonts/noto:ro"
 
 networks:
   edge:

@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
                                         ├ caddy    HTTPS 終端（Let's Encrypt）→ probo:8080
                                         ├ probo    このフォークから作ったイメージ（ECR、ダイジェスト固定）
                                         ├ postgres 外部に出ないネットワーク（db）
-                                        └ chrome   PDF 生成（render ネットワーク）
+                                        └ chrome   PDF 生成（render ネットワーク、日本語フォントはサーバーから渡す）
 S3：ファイル（michisuu-opengrc-files）、DB バックアップ（michisuu-opengrc-backup）
 SSM Parameter Store：秘密情報（/opengrc/*）
 SES：メール送信（no-reply@michisuu.com）
@@ -138,7 +138,7 @@ CloudWatch Logs：コンテナのログ、Session Manager の操作記録（400 
 - [ ] 招待メールが @michisuu.com に届き、DKIM が「pass」になっている（Gmail の「メッセージのソースを表示」）
 - [ ] Pマーク・ISO 27001 のフレームワークと内部統制を取り込める
 - [ ] 証跡のファイルをアップロード・ダウンロードできる
-- [ ] 文書の PDF を出力でき、日本語が文字化けしない（化ける場合は Phase 2 の A1 で対応）
+- [ ] 文書の PDF を出力でき、日本語が文字化けしない（Chrome のイメージには日本語フォントがないため、サーバーの `fonts-noto-cjk` をコンテナに渡している。化ける場合は、サーバーに `/usr/share/fonts/opentype/noto` があるかを確認する）
 - [ ] 外部から 80・443 以外のポートが閉じている（例：`nc -vz <IP> 22`、`5432`、`8080`、`9222` がすべて失敗する）
 - [ ] CloudWatch Logs の `/opengrc/containers` にログが出ていて、エラーがない
 - [ ] バックアップを手動で実行し、S3 にダンプができる（下の「バックアップ」）
