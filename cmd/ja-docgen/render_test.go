@@ -97,6 +97,7 @@ const (
   手数料の金額: 1,000 円
   手数料の支払方法: 振込
   手数料の支払期限: 1 か月
+  事務所の仕切り: なし
 外部送信:
   - 送信先: 解析事業者
     送信する情報: 閲覧したページ
@@ -492,9 +493,18 @@ func TestTemplates(t *testing.T) {
 		},
 	)
 
+	example, err := os.ReadFile(exampleConfigPath)
+	require.NoError(t, err)
+
 	configs := map[string]string{
-		"example configuration": "",
-		"all optional blocks":   allChoicesConfig,
+		"example configuration": string(example),
+		"office with partitions": strings.Replace(
+			string(example),
+			"事務所の仕切り: なし",
+			"事務所の仕切り: あり",
+			1,
+		),
+		"all optional blocks": allChoicesConfig,
 	}
 	for name, yaml := range configs {
 		t.Run(
@@ -502,11 +512,6 @@ func TestTemplates(t *testing.T) {
 			func(t *testing.T) {
 				t.Parallel()
 
-				if yaml == "" {
-					data, err := os.ReadFile(exampleConfigPath)
-					require.NoError(t, err)
-					yaml = string(data)
-				}
 				cfg := mustParseConfig(t, yaml)
 
 				for _, tmpl := range templates {
