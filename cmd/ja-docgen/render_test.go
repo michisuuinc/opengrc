@@ -475,6 +475,47 @@ func TestCheck_AcceptsFillInAndDocumentNumber(t *testing.T) {
 	assert.Empty(t, Check("30-test.md", "【文書番号】【記入：氏名】【会社名】"))
 }
 
+func TestCheckPaths(t *testing.T) {
+	t.Parallel()
+
+	repo := t.TempDir()
+	templates := filepath.Join(repo, "docs", "ja", "templates")
+	require.NoError(t, os.MkdirAll(templates, 0o755))
+	require.NoError(t, os.Mkdir(filepath.Join(repo, ".git"), 0o755))
+	outside := t.TempDir()
+
+	tests := []struct {
+		name    string
+		config  string
+		out     string
+		message string
+	}{
+		{name: "both outside", config: filepath.Join(outside, "company.yaml"), out: filepath.Join(outside, "out")},
+		{name: "example configuration", config: filepath.Join(templates, ExampleConfigFile), out: filepath.Join(outside, "out")},
+		{name: "configuration in the repository", config: filepath.Join(repo, "company.yaml"), out: filepath.Join(outside, "out"), message: "設定ファイルはリポジトリの外に"},
+		{name: "configuration next to the example", config: filepath.Join(templates, "company.yaml"), out: filepath.Join(outside, "out"), message: "設定ファイルはリポジトリの外に"},
+		{name: "output in the repository", config: filepath.Join(outside, "company.yaml"), out: filepath.Join(repo, "out"), message: "出力先はリポジトリの外に"},
+		{name: "output is the repository", config: filepath.Join(outside, "company.yaml"), out: repo, message: "出力先はリポジトリの外に"},
+	}
+
+	for _, tt := range tests {
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				t.Parallel()
+
+				err := checkPaths(templates, tt.config, tt.out)
+				if tt.message == "" {
+					assert.NoError(t, err)
+					return
+				}
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.message)
+			},
+		)
+	}
+}
+
 func TestTemplates(t *testing.T) {
 	t.Parallel()
 
@@ -573,12 +614,23 @@ func TestRun(t *testing.T) {
 	)
 
 	t.Run(
-		"output inside the templates directory",
+		"output inside the repository",
 		func(t *testing.T) {
 			t.Parallel()
 
 			assert.Equal(t, 2, run(templatesDir, exampleConfigPath, templatesDir, false))
 			assert.Equal(t, 2, run(templatesDir, exampleConfigPath, filepath.Join(templatesDir, "out"), false))
+			assert.Equal(t, 2, run(templatesDir, exampleConfigPath, "../../out", false))
+		},
+	)
+
+	t.Run(
+		"configuration inside the repository",
+		func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, 2, run(templatesDir, filepath.Join(templatesDir, "company.yaml"), t.TempDir(), false))
+			assert.Equal(t, 2, run(templatesDir, "../../company.yaml", t.TempDir(), false))
 		},
 	)
 
