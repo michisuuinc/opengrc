@@ -31,7 +31,7 @@ SPDX-License-Identifier: MIT
 | 内部統制 | `apps/console/public/data/internal-controls/jp/` | Pマークと ISO 27001 に紐付けた内部統制 39 件 | [#1](https://github.com/michisuuinc/opengrc/pull/1)、[#3](https://github.com/michisuuinc/opengrc/pull/3) |
 | 文書 | `docs/ja/` | 訳語表（`glossary.md`）、用語解説（`terms.md`）、この一覧、Pマークの方針・規程・公表文・書式のひな形（`templates/`、18 本）、利用マニュアル（`manual/`） | [#1](https://github.com/michisuuinc/opengrc/pull/1)、[#5](https://github.com/michisuuinc/opengrc/pull/5) ほか |
 | チェック | `scripts/i18n/`、`.github/workflows/i18n-check.yaml` | 翻訳ファイル・フレームワーク・内部統制のデータが英語版や取り込み形式と食い違っていないかの検査 | [#1](https://github.com/michisuuinc/opengrc/pull/1)、[#3](https://github.com/michisuuinc/opengrc/pull/3) |
-| 生成ツール | `cmd/ja-docgen/`、`scripts/ja-docs/`、`docs/ja/templates/config.example.yaml`、`docs/ja/templates/variables.md`、`.github/workflows/ja-templates-check.yaml` | 文書ひな形に会社の値を入れて完成版を作るツール、完成版を OpenGRC に登録して統制・内部統制に紐付けるスクリプト、ひな形の検査 | [#10](https://github.com/michisuuinc/opengrc/pull/10) |
+| 生成ツール | `cmd/ja-docgen/`、`scripts/ja-docs/`、`docs/ja/templates/config.example.yaml`、`docs/ja/templates/variables.md`、`.github/workflows/ja-templates-check.yaml` | 文書ひな形に会社の値を入れて完成版を作るツール、完成版を OpenGRC に登録して統制・内部統制に紐付けるスクリプト、ひな形の検査 | [#10](https://github.com/michisuuinc/opengrc/pull/10)〜[#14](https://github.com/michisuuinc/opengrc/pull/14) |
 
 ## リポジトリの設定（コード以外）
 
