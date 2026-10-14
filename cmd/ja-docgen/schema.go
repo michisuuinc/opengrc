@@ -144,9 +144,9 @@ var (
 		{Section: SectionOperation, Name: "本人確認のオンラインの方法", Default: "ログインしたうえでの手続きや、ご登録の情報との照合"},
 		{Section: SectionOperation, Name: "電磁的記録の形式", Default: "PDF または CSV のファイル（パスワードを付けてメールで送付するか、ダウンロード用の URL をお知らせします）"},
 		{Section: SectionOperation, Name: "委託している業務", Default: "クラウドサービスによるデータの保管"},
-		{Section: SectionOperation, Name: "JIPDECへの報告先"},
-		{Section: SectionOperation, Name: "JIPDECへの報告期限"},
-		{Section: SectionOperation, Name: "JIPDECの報告の手引き"},
+		{Section: SectionOperation, Name: "審査機関への事故の報告先"},
+		{Section: SectionOperation, Name: "審査機関への事故の報告期限"},
+		{Section: SectionOperation, Name: "事故の報告の手引き"},
 
 		// 選択に付随する値（選択によって文章に残ったときだけ必須）
 		{Section: SectionChoice, Name: "第三者提供の内容"},
