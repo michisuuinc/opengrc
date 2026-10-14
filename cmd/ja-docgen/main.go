@@ -21,7 +21,7 @@
 // Command ja-docgen fills the Japanese PrivacyMark document templates in
 // docs/ja/templates with a company's values from a YAML file.
 //
-//	go run ./cmd/ja-docgen -config company.yaml -out out/
+//	go run ./cmd/ja-docgen -config ../private/company.yaml -out ../private/out
 //	go run ./cmd/ja-docgen -check
 package main
 
@@ -70,7 +70,7 @@ func run(templatesDir, configPath, outDir string, checkOnly bool) int {
 		return 2
 	}
 
-	if err := checkOutDir(templatesDir, outDir); err != nil {
+	if err := checkPaths(templatesDir, configPath, outDir); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 2
 	}
@@ -150,23 +150,58 @@ func loadTemplates(dir string) ([]template, error) {
 	return templates, nil
 }
 
-// checkOutDir refuses an output directory that is, or is inside, the
-// templates directory, so the templates are never overwritten.
-func checkOutDir(templatesDir, outDir string) error {
+// ExampleConfigFile is the only configuration that may live inside the
+// repository; it holds fictional values.
+const ExampleConfigFile = "config.example.yaml"
+
+// checkPaths refuses a configuration file or an output directory inside the
+// repository that holds the templates. A company's own values and finished
+// documents are confidential and must not end up in a commit by mistake.
+func checkPaths(templatesDir, configPath, outDir string) error {
 	templatesAbs, err := filepath.Abs(templatesDir)
 	if err != nil {
 		return fmt.Errorf("cannot resolve templates directory: %w", err)
+	}
+	configAbs, err := filepath.Abs(configPath)
+	if err != nil {
+		return fmt.Errorf("cannot resolve configuration path: %w", err)
 	}
 	outAbs, err := filepath.Abs(outDir)
 	if err != nil {
 		return fmt.Errorf("cannot resolve output directory: %w", err)
 	}
 
-	rel, err := filepath.Rel(templatesAbs, outAbs)
-	if err == nil && (rel == "." || (rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator)))) {
-		return fmt.Errorf("output directory must be outside the templates directory: %s", outDir)
+	root := repositoryRoot(templatesAbs)
+	if isWithin(root, configAbs) && configAbs != filepath.Join(templatesAbs, ExampleConfigFile) {
+		return fmt.Errorf("設定ファイルはリポジトリの外に置いてください（%s）: %s", root, configPath)
+	}
+	if isWithin(root, outAbs) {
+		return fmt.Errorf("出力先はリポジトリの外にしてください（%s）: %s", root, outDir)
 	}
 	return nil
+}
+
+// repositoryRoot returns the nearest ancestor of dir containing .git, or dir
+// itself when there is none.
+func repositoryRoot(dir string) string {
+	for d := dir; ; {
+		if _, err := os.Stat(filepath.Join(d, ".git")); err == nil {
+			return d
+		}
+		parent := filepath.Dir(d)
+		if parent == d {
+			return dir
+		}
+		d = parent
+	}
+}
+
+func isWithin(root, path string) bool {
+	rel, err := filepath.Rel(root, path)
+	if err != nil {
+		return false
+	}
+	return rel == "." || (rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator)))
 }
 
 func report(problems []Problem, success string) int {
