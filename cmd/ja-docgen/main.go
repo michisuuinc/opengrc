@@ -23,6 +23,7 @@
 //
 //	go run ./cmd/ja-docgen -config ../private/company.yaml -out ../private/out
 //	go run ./cmd/ja-docgen -check
+//	go run ./cmd/ja-docgen -prosemirror ../private/out/10-pms-rules.md
 package main
 
 import (
@@ -44,9 +45,13 @@ func main() {
 		configPath   = flag.String("config", "", "YAML file with the company's values")
 		outDir       = flag.String("out", "", "directory to write the finished documents to")
 		checkOnly    = flag.Bool("check", false, "only validate the templates")
+		prosemirror  = flag.String("prosemirror", "", "convert a finished document to the OpenGRC document format and print it")
 	)
 	flag.Parse()
 
+	if *prosemirror != "" {
+		os.Exit(runConvert(*prosemirror, os.Stdout))
+	}
 	os.Exit(run(*templatesDir, *configPath, *outDir, *checkOnly))
 }
 

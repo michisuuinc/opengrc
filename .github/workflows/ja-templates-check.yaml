@@ -20,6 +20,7 @@
 
 # Keeps the Japanese PrivacyMark document templates usable by ja-docgen:
 # every 【variable】 must be defined and every conditional block balanced.
+# Also tests the script that registers the finished documents in OpenGRC.
 name: "ja-templates-check"
 on:
   push:
@@ -29,6 +30,7 @@ on:
     paths:
       - "docs/ja/templates/**"
       - "cmd/ja-docgen/**"
+      - "scripts/ja-docs/**"
       - ".github/workflows/ja-templates-check.yaml"
 
 permissions:
@@ -51,3 +53,8 @@ jobs:
         run: "go test ./cmd/ja-docgen"
       - name: "Check templates"
         run: "go run ./cmd/ja-docgen -check"
+      - uses: "actions/setup-node@820762786026740c76f36085b0efc47a31fe5020" # v6
+        with:
+          node-version-file: ".nvmrc"
+      - name: "Test document sync script"
+        run: "node --test scripts/ja-docs/sync.test.mjs"

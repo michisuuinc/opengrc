@@ -646,3 +646,48 @@ func TestRun(t *testing.T) {
 		},
 	)
 }
+
+func TestToProseMirror(t *testing.T) {
+	t.Parallel()
+
+	content, err := ToProseMirror("# 題名\n\n本文\n\n| 項目 | 内容 |\n| --- | --- |\n| a | b |\n")
+	require.NoError(t, err)
+
+	assert.NotContains(t, content, "題名")
+	assert.Contains(t, content, `"type":"doc"`)
+	assert.Contains(t, content, "本文")
+	assert.Contains(t, content, `"type":"table"`)
+}
+
+func TestRunConvert(t *testing.T) {
+	t.Parallel()
+
+	t.Run(
+		"every rendered template converts",
+		func(t *testing.T) {
+			t.Parallel()
+
+			outDir := t.TempDir()
+			require.Equal(t, 0, run(templatesDir, exampleConfigPath, outDir, false))
+
+			files, err := filepath.Glob(filepath.Join(outDir, "*.md"))
+			require.NoError(t, err)
+			require.Len(t, files, 18)
+			for _, f := range files {
+				var buf strings.Builder
+				assert.Equal(t, 0, runConvert(f, &buf), f)
+				assert.True(t, strings.HasPrefix(buf.String(), "{"), f)
+			}
+		},
+	)
+
+	t.Run(
+		"missing file",
+		func(t *testing.T) {
+			t.Parallel()
+
+			var buf strings.Builder
+			assert.Equal(t, 2, runConvert(filepath.Join(t.TempDir(), "none.md"), &buf))
+		},
+	)
+}
