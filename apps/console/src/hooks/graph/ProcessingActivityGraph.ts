@@ -103,6 +103,7 @@ export const processingActivityNodeQuery = graphql`
     node(id: $processingActivityId) {
       ... on ProcessingActivity {
         id
+        ...ProcessingActivityLedgerCardFragment
         name
         purpose
         dataSubjectCategory

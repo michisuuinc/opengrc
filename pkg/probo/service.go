@@ -112,6 +112,7 @@ type (
 		AiSystems                             *AiSystemService
 		RightsRequests                        *RightsRequestService
 		ProcessingActivities                  *ProcessingActivityService
+		ProcessingActivityLedger              *ProcessingActivityLedgerService
 		DataProtectionImpactAssessments       *DataProtectionImpactAssessmentService
 		TransferImpactAssessments             *TransferImpactAssessmentService
 		StatementsOfApplicability             *StatementOfApplicabilityService
@@ -225,6 +226,7 @@ func NewService(
 	svc.AiSystems = &AiSystemService{svc: svc}
 	svc.RightsRequests = &RightsRequestService{svc: svc}
 	svc.ProcessingActivities = &ProcessingActivityService{svc: svc}
+	svc.ProcessingActivityLedger = &ProcessingActivityLedgerService{svc: svc}
 	svc.DataProtectionImpactAssessments = &DataProtectionImpactAssessmentService{svc: svc}
 	svc.TransferImpactAssessments = &TransferImpactAssessmentService{svc: svc}
 	svc.StatementsOfApplicability = &StatementOfApplicabilityService{svc: svc}

@@ -2429,6 +2429,39 @@
     "residualRisk": { "low": "Low", "medium": "Medium", "high": "High" },
     "actions": { "delete": "Delete", "saving": "Saving...", "save": "Save Changes", "cancel": "Cancel", "createDpia": "Create DPIA", "updateDpia": "Update DPIA", "deleteDpia": "Delete DPIA", "createTia": "Create TIA", "updateTia": "Update TIA", "deleteTia": "Delete TIA" }
   },
+  "processingActivityLedger": {
+    "title": "PrivacyMark register items",
+    "description": "Items of the personal information register (個人情報管理台帳) that the fields above do not cover. They are included in the Excel export.",
+    "fileName": "personal-information-register",
+    "fields": {
+      "department": "Department in charge",
+      "approximateRecordCount": "Approximate number of records",
+      "collectionMethod": "Collection method",
+      "storageLocation": "Storage location and medium",
+      "accessScope": "Who can access",
+      "disposalMethod": "Disposal method"
+    },
+    "placeholders": {
+      "department": "e.g. Human Resources",
+      "approximateRecordCount": "e.g. about 300 per year",
+      "collectionMethod": "e.g. directly from the person through the web form",
+      "storageLocation": "e.g. recruitment system, locked cabinet A",
+      "accessScope": "e.g. recruitment staff of Human Resources",
+      "disposalMethod": "e.g. deleted from the system; paper is shredded"
+    },
+    "actions": {
+      "save": "Save register items",
+      "saving": "Saving...",
+      "export": "Export register (Excel)"
+    },
+    "messages": {
+      "saved": "Register items saved"
+    },
+    "errors": {
+      "save": "Failed to save register items",
+      "export": "Failed to export the register"
+    }
+  },
   "createProcessingActivityDialog": {
     "breadcrumb": { "activities": "Processing Activities", "create": "Create Processing Activity" },
     "messages": { "success": "Success", "error": "Error", "created": "Processing activity created successfully" },

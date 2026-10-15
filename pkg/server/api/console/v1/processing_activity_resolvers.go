@@ -264,6 +264,22 @@ func (r *processingActivityResolver) TransferImpactAssessment(ctx context.Contex
 	return types.NewTransferImpactAssessment(tia), nil
 }
 
+// LedgerDetails is the resolver for the ledgerDetails field.
+func (r *processingActivityResolver) LedgerDetails(ctx context.Context, obj *types.ProcessingActivity) (*types.ProcessingActivityLedgerDetails, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionProcessingActivityGet)
+	if err != nil {
+		return nil, err
+	}
+
+	details, err := r.probo.ProcessingActivityLedger.GetDetails(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get processing activity ledger details", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewProcessingActivityLedgerDetails(details), nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *processingActivityResolver) Permission(ctx context.Context, obj *types.ProcessingActivity, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)

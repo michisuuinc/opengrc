@@ -1,0 +1,44 @@
+# Japanese PrivacyMark register (個人情報管理台帳): the register items a
+# processing activity does not carry, and the register's Excel export.
+
+type ProcessingActivityLedgerDetails {
+    department: String
+    approximateRecordCount: String
+    collectionMethod: String
+    storageLocation: String
+    accessScope: String
+    disposalMethod: String
+    updatedAt: Datetime
+}
+
+extend type Mutation {
+    updateProcessingActivityLedgerDetails(
+        input: UpdateProcessingActivityLedgerDetailsInput!
+    ): UpdateProcessingActivityLedgerDetailsPayload!
+    exportProcessingActivityLedger(
+        input: ExportProcessingActivityLedgerInput!
+    ): ExportProcessingActivityLedgerPayload!
+}
+
+input UpdateProcessingActivityLedgerDetailsInput {
+    processingActivityId: ID!
+    department: String @goField(omittable: true)
+    approximateRecordCount: String @goField(omittable: true)
+    collectionMethod: String @goField(omittable: true)
+    storageLocation: String @goField(omittable: true)
+    accessScope: String @goField(omittable: true)
+    disposalMethod: String @goField(omittable: true)
+}
+
+type UpdateProcessingActivityLedgerDetailsPayload {
+    processingActivity: ProcessingActivity!
+}
+
+input ExportProcessingActivityLedgerInput {
+    organizationId: ID!
+}
+
+type ExportProcessingActivityLedgerPayload {
+    # The .xlsx workbook as a data URL.
+    data: String!
+}
