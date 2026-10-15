@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{.Language}}">
   <head>
     <meta charset="utf-8" />
     <style>
@@ -159,6 +159,11 @@
       }
 
       /* -- Consent -- */
+      .original-note {
+        font-size: 9px;
+        color: #555;
+        margin: 4px 0;
+      }
       .consent-box {
         padding: 6px;
         font-size: 9px;
@@ -254,38 +259,38 @@
     <!-- Title bar -->
     <table class="title-bar">
       <tr>
-        <td>Certificate Of Completion</td>
+        <td>{{.L.Title}}</td>
       </tr>
     </table>
 
     <!-- Metadata -->
     <table class="meta-table">
       <tr>
-        <td class="lbl">Status</td>
-        <td class="val">Completed</td>
+        <td class="lbl">{{.L.Status}}</td>
+        <td class="val">{{.L.Completed}}</td>
       </tr>
       <tr>
-        <td class="lbl">Subject</td>
+        <td class="lbl">{{.L.Subject}}</td>
         <td class="val">{{.DocumentTypeName}}</td>
       </tr>
       <tr>
-        <td class="lbl">Document Type</td>
+        <td class="lbl">{{.L.DocumentType}}</td>
         <td class="val">{{.DocumentType}}</td>
       </tr>
       <tr>
-        <td class="lbl">Signature Id</td>
+        <td class="lbl">{{.L.SignatureID}}</td>
         <td class="val mono">{{.SignatureID}}</td>
       </tr>
       <tr>
-        <td class="lbl">Organization Id</td>
+        <td class="lbl">{{.L.OrganizationID}}</td>
         <td class="val mono">{{.OrganizationID}}</td>
       </tr>
       <tr>
-        <td class="lbl">File Id</td>
+        <td class="lbl">{{.L.FileID}}</td>
         <td class="val mono">{{.FileID}}</td>
       </tr>
       <tr>
-        <td class="lbl">File Hash (SHA-256)</td>
+        <td class="lbl">{{.L.FileHash}}</td>
         <td class="val mono">{{.FileHash}}</td>
       </tr>
     </table>
@@ -293,55 +298,56 @@
     <!-- Signer Events -->
     <table class="section-bar">
       <tr>
-        <td>Signer</td>
+        <td>{{.L.Signer}}</td>
       </tr>
     </table>
     <table class="signer-table">
       <tr>
-        <td class="lbl">Name</td>
+        <td class="lbl">{{.L.Name}}</td>
         <td>{{.SignerFullName}}</td>
       </tr>
       <tr>
-        <td class="lbl">Email</td>
+        <td class="lbl">{{.L.Email}}</td>
         <td>{{.SignerEmail}}</td>
       </tr>
       <tr>
-        <td class="lbl">Signed At</td>
+        <td class="lbl">{{.L.SignedAt}}</td>
         <td>{{.SignedAt}}</td>
       </tr>
       <tr>
-        <td class="lbl">Security Level</td>
-        <td>Email, Account Authentication</td>
+        <td class="lbl">{{.L.SecurityLevel}}</td>
+        <td>{{.L.SecurityLevelValue}}</td>
       </tr>
       <tr>
-        <td class="lbl">IP Address</td>
+        <td class="lbl">{{.L.IPAddress}}</td>
         <td class="mono">{{.SignerIPAddress}}</td>
       </tr>
       <tr>
-        <td class="lbl">User Agent</td>
+        <td class="lbl">{{.L.UserAgent}}</td>
         <td style="font-size: 8.5px;">{{.SignerUserAgent}}</td>
       </tr>
       <tr>
-        <td class="lbl">ERSD Consent</td>
-        <td>Accepted</td>
+        <td class="lbl">{{.L.ERSDConsent}}</td>
+        <td>{{.L.Accepted}}</td>
       </tr>
     </table>
 
     <!-- Electronic Consent -->
     <table class="section-bar">
       <tr>
-        <td>Electronic Consent</td>
+        <td>{{.L.ElectronicConsent}}</td>
       </tr>
     </table>
+    {{if .L.OriginalNote}}<div class="original-note">{{.L.OriginalNote}}</div>{{end}}
     <div class="consent-box">{{.ConsentText}}</div>
 
     <!-- Signing Summary Events -->
     <table class="events-table">
       <thead>
         <tr>
-          <td>Signing Summary Events</td>
-          <td>Status</td>
-          <td>Timestamps</td>
+          <td>{{.L.SummaryEvents}}</td>
+          <td>{{.L.EventStatus}}</td>
+          <td>{{.L.Timestamps}}</td>
         </tr>
       </thead>
       <tbody>
@@ -358,29 +364,29 @@
     <!-- Integrity Verification -->
     <table class="section-bar">
       <tr>
-        <td>Integrity Verification</td>
+        <td>{{.L.IntegrityVerification}}</td>
       </tr>
     </table>
     <table class="detail-table">
       <tr>
-        <td class="lbl">Seal (SHA-256, v{{.SealVersion}})</td>
+        <td class="lbl">{{.L.Seal}} (SHA-256, v{{.SealVersion}})</td>
         <td><span class="mono">{{.Seal}}</span></td>
       </tr>
       {{if .TSAAuthority}}
       <tr>
-        <td class="lbl">TSA Authority</td>
+        <td class="lbl">{{.L.TSAAuthority}}</td>
         <td>{{.TSAAuthority}}</td>
       </tr>
       {{end}}
       {{if .TSATime}}
       <tr>
-        <td class="lbl">TSA Timestamp</td>
+        <td class="lbl">{{.L.TSATimestamp}}</td>
         <td>{{.TSATime}}</td>
       </tr>
       {{end}}
       {{if .TSASerial}}
       <tr>
-        <td class="lbl">TSA Serial Number</td>
+        <td class="lbl">{{.L.TSASerialNumber}}</td>
         <td>{{.TSASerial}}</td>
       </tr>
       {{end}}
@@ -389,7 +395,7 @@
     <!-- Seal Verification -->
     <table class="section-bar">
       <tr>
-        <td>Seal Verification (v{{.SealVersion}})</td>
+        <td>{{.L.SealVerification}} (v{{.SealVersion}})</td>
       </tr>
     </table>
     <div class="verification-box">
@@ -417,7 +423,8 @@
 
     <!-- Electronic Record and Signature Disclosure -->
     <div class="ersd-section">
-      <div class="ersd-title">Electronic Record and Signature Disclosure</div>
+      <div class="ersd-title">{{.L.ERSD}}</div>
+      {{if .L.OriginalNote}}<div class="original-note">{{.L.OriginalNote}}</div>{{end}}
       <div class="ersd-body">
         <p>
           From time to time, the organization identified in this certificate (we, us, or
@@ -508,10 +515,7 @@
 
     <!-- Footer -->
     <div class="footer">
-      This certificate was generated automatically by Probo. The integrity
-      seal and TSA timestamp provide tamper-evident proof of the signing
-      event. All information required to independently recompute and verify
-      the seal is included in this document.
+      {{.L.Footer}}
     </div>
   </body>
 </html>
