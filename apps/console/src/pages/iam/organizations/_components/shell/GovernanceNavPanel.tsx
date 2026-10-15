@@ -41,6 +41,7 @@ const governanceNavPanelQuery = graphql`
         canListFindings: permission(action: "core:finding:list")
         canListDocuments: permission(action: "core:document:list")
         canListStatementsOfApplicability: permission(action: "core:statement-of-applicability:list")
+        canListTrainingPlans: permission(action: "core:training-plan:list")
       }
     }
   }
@@ -109,6 +110,12 @@ function GovernanceNavPanelInner({ queryRef, group }: GovernanceNavPanelInnerPro
         <NavPanelItem
           label={t("nav.statementsOfApplicability")}
           to={navHref(organizationId, group, "statements-of-applicability")}
+        />
+      )}
+      {organization.canListTrainingPlans && (
+        <NavPanelItem
+          label={t("nav.trainings")}
+          to={navHref(organizationId, group, "trainings")}
         />
       )}
     </>

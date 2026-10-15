@@ -1466,6 +1466,7 @@
     "dataProtectionImpactAssessments": "DPIAs",
     "transferImpactAssessments": "TIAs",
     "statementsOfApplicability": "SoA",
+    "trainings": "Training",
     "rightsRequests": "Rights Requests",
     "campaigns": "Campaigns",
     "connections": "Connectors",
@@ -2489,6 +2490,132 @@
     "errors": {
       "save": "Failed to save risk analysis items",
       "export": "Failed to export the risk analysis"
+    }
+  },
+  "training": {
+    "title": "Training",
+    "description": "Yearly training plans for the PrivacyMark: materials, participants, attendance and understanding tests.",
+    "fileName": "training-records",
+    "empty": "There are no training plans for this year yet.",
+    "loading": "Loading...",
+    "allYears": "All years",
+    "fiscalYearLabel": "FY {{year}}",
+    "periodValue": "{{startsOn}} to {{endsOn}}",
+    "progressValue": "{{completed}} / {{total}} completed",
+    "notAttendedValue": "{{count}} not attended",
+    "testRequiredValue": "Yes (pass score: {{passScore}})",
+    "timeZoneNote": "Signatures count when they are made within the period, in the {{timeZone}} time zone.",
+    "deleteConfirm": "Delete the training plan \"{{name}}\" and its participant records?",
+    "fields": {
+      "name": "Name",
+      "fiscalYear": "Fiscal year",
+      "kind": "Type",
+      "method": "Method",
+      "period": "Period",
+      "startsOn": "Starts on",
+      "endsOn": "Ends on",
+      "instructor": "Instructor",
+      "description": "Content",
+      "testRequired": "Understanding test",
+      "passScore": "Pass score",
+      "progress": "Progress"
+    },
+    "help": {
+      "description": "What the training covers, e.g. the privacy policy, the roles in the PMS and how to report incidents.",
+      "passScore": "Scores at or above this pass. Leave empty to enter pass or fail by hand.",
+      "manualAttendedOn": "For training without signatures, such as classroom training. A date entered here wins over signatures."
+    },
+    "kinds": {
+      "PERIODIC": "Periodic training",
+      "ONBOARDING": "Onboarding training",
+      "ROLE_BASED": "Role-based training",
+      "AD_HOC": "Ad hoc training"
+    },
+    "methods": {
+      "CLASSROOM": "Classroom",
+      "ONLINE": "Online",
+      "E_LEARNING": "e-learning",
+      "MATERIALS": "Materials and explanation"
+    },
+    "statuses": {
+      "COMPLETED": "Completed",
+      "TEST_PENDING": "Test pending",
+      "FAILED": "Failed",
+      "NOT_ATTENDED": "Not attended"
+    },
+    "sources": {
+      "SIGNATURE": "signature",
+      "MANUAL": "entered by hand"
+    },
+    "testRequired": {
+      "yes": "Required",
+      "no": "Not required"
+    },
+    "testPassed": {
+      "auto": "From the score",
+      "passed": "Passed",
+      "failed": "Failed"
+    },
+    "materials": {
+      "title": "Materials",
+      "description": "Documents participants read and sign in the employee portal. Signing every material within the period completes the attendance.",
+      "edit": "Choose materials",
+      "empty": "No materials yet. Classroom training can be recorded without materials."
+    },
+    "participants": {
+      "title": "Participants",
+      "description": "Everyone who must take this training, including temporary and part-time staff.",
+      "add": "Add participants",
+      "addSelected": "Add selected",
+      "selectAll": "Select all",
+      "clearAll": "Clear selection",
+      "selectedCount": "{{count}} selected",
+      "noCandidates": "Every member is already a participant.",
+      "requestSignatures": "Request signatures",
+      "allStatuses": "All statuses",
+      "empty": "No participants.",
+      "removeConfirm": "Remove {{name}} from this training?",
+      "attendedValue": "{{date}} ({{source}})",
+      "signaturesValue": "{{signed}} / {{total}}",
+      "signedOutsidePeriod": "{{count}} signed before the period. Publish a new version of the material to have it signed again.",
+      "fields": {
+        "fullName": "Name",
+        "department": "Department",
+        "status": "Status",
+        "attendedOn": "Attended on",
+        "manualAttendedOn": "Attended on (entered by hand)",
+        "signatures": "Signed materials",
+        "testScore": "Score",
+        "testPassed": "Result",
+        "note": "Note"
+      }
+    },
+    "actions": {
+      "create": "New training plan",
+      "edit": "Edit",
+      "save": "Save",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "remove": "Remove",
+      "export": "Export training records (Excel)"
+    },
+    "validation": {
+      "nameRequired": "Name is required",
+      "dateRequired": "Enter a date",
+      "period": "The period must not end before it starts"
+    },
+    "messages": {
+      "created": "Training plan created",
+      "saved": "Training saved",
+      "deleted": "Training plan deleted",
+      "participantRemoved": "Participant removed",
+      "signaturesRequested": "Signatures requested from the participants who have not attended"
+    },
+    "errors": {
+      "save": "Failed to save the training",
+      "delete": "Failed to delete the training plan",
+      "export": "Failed to export the training records",
+      "requestSignatures": "Failed to request signatures. Check that every material is published."
     }
   },
   "createProcessingActivityDialog": {
