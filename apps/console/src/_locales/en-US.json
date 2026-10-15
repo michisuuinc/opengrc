@@ -3833,5 +3833,25 @@
     },
     "noFinding": "None",
     "openFinding": "Open the finding"
+  },
+  "organizationEmailLanguage": {
+    "title": "Email language",
+    "description": "The language of emails to people whose language is unknown, such as invited members, external signers and update subscribers. People who saved a language get emails in theirs.",
+    "fields": {
+      "language": "Default language"
+    },
+    "languages": {
+      "ja": "Japanese",
+      "en": "English"
+    },
+    "actions": {
+      "save": "Save"
+    },
+    "messages": {
+      "saved": "Email language saved"
+    },
+    "errors": {
+      "save": "Could not save the email language"
+    }
   }
 }

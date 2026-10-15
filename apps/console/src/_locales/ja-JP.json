@@ -7301,5 +7301,25 @@
     },
     "noFinding": "なし",
     "openFinding": "指摘事項を開く"
+  },
+  "organizationEmailLanguage": {
+    "title": "メールの言語",
+    "description": "言語がわからない相手（招待するメンバー、外部の署名者、アップデートの購読者など）に送るメールの言語です。管理画面などで言語を保存した人には、その人の言語で送ります。",
+    "fields": {
+      "language": "既定の言語"
+    },
+    "languages": {
+      "ja": "日本語",
+      "en": "英語"
+    },
+    "actions": {
+      "save": "保存"
+    },
+    "messages": {
+      "saved": "メールの言語を保存しました"
+    },
+    "errors": {
+      "save": "メールの言語を保存できませんでした"
+    }
   }
 }

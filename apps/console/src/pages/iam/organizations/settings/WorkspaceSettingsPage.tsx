@@ -20,11 +20,14 @@
 
 import { usePageTitle } from "@probo/hooks";
 import { Heading } from "@probo/ui/src/v2/typography/Heading";
+import { Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 
 import type { WorkspaceSettingsPageQuery } from "#/__generated__/iam/WorkspaceSettingsPageQuery.graphql";
+import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { OrganizationEmailLanguageSection } from "#/pages/organizations/settings/_components/OrganizationEmailLanguageSection";
 
 import { WorkspaceDangerZoneSection } from "./_components/WorkspaceDangerZoneSection";
 import { WorkspaceIdentitySection } from "./_components/WorkspaceIdentitySection";
@@ -50,6 +53,7 @@ interface WorkspaceSettingsPageProps {
 
 export function WorkspaceSettingsPage({ queryRef }: WorkspaceSettingsPageProps) {
   const { t } = useTranslation(SETTINGS_NS);
+  const organizationId = useOrganizationId();
   const { root, header } = workspaceSettingsPage();
   const title = t("workspaceSettingsPage.title");
   usePageTitle(title);
@@ -70,6 +74,10 @@ export function WorkspaceSettingsPage({ queryRef }: WorkspaceSettingsPageProps) 
         </Heading>
       </div>
       <WorkspaceIdentitySection organizationKey={organization} />
+      {/* Fork: the default email language (core API). */}
+      <Suspense fallback={null}>
+        <OrganizationEmailLanguageSection organizationId={organizationId} />
+      </Suspense>
       <WorkspaceDangerZoneSection organizationKey={organization} />
     </div>
   );

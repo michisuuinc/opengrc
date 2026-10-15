@@ -31,6 +31,7 @@ import { NavPanel } from "./_components/shell/NavPanel";
 import { NavRail } from "./_components/shell/NavRail";
 import { NavSpotlight } from "./_components/shell/NavSpotlight";
 import { organizationLayout } from "./_components/shell/variants";
+import { ViewerLocaleSync } from "./_components/ViewerLocaleSync";
 
 export const organizationLayoutQuery = graphql`
   query OrganizationLayoutQuery($organizationId: ID!) {
@@ -51,6 +52,8 @@ export const organizationLayoutQuery = graphql`
     }
     viewer @required(action: THROW) {
       email
+      # Fork: saved so that emails use the console's language.
+      locale
     }
   }
 `;
@@ -76,6 +79,7 @@ export function OrganizationLayout({ queryRef }: OrganizationLayoutProps) {
 
   return (
     <LayoutContext value={drawerContext}>
+      <ViewerLocaleSync savedLocale={viewer.locale} />
       <div className={slots.root()}>
         <div className={slots.body()}>
           <NavSpotlight
