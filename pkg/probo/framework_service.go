@@ -684,7 +684,14 @@ func (s FrameworkService) SendExportEmail(
 				return fmt.Errorf("cannot generate download URL: %w", err)
 			}
 
-			emailPresenter := emails.NewPresenter(s.svc.baseURL, recipientName)
+			// Fork: the email is in the recipient's language.
+			languages, err := coredata.EmailAddressLanguagePreferences(ctx, tx, recipientEmail, file.OrganizationID)
+			if err != nil {
+				return fmt.Errorf("cannot load email language: %w", err)
+			}
+
+			emailPresenter := emails.NewPresenter(s.svc.baseURL, recipientName).
+				WithLanguage(emails.ResolveLanguage(languages...))
 
 			subject, textBody, htmlBody, err := emailPresenter.RenderFrameworkExport(
 				ctx,

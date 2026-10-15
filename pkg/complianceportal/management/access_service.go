@@ -1172,7 +1172,14 @@ func (s *Service) sendAccessEmail(
 		return fmt.Errorf("cannot get compliance page email presenter config: %w", err)
 	}
 
-	emailPresenter := emails.NewPresenterFromConfig(emailPresenterCfg, recipientName)
+	// Fork: the email is in the recipient's language.
+	languages, err := coredata.IdentityLanguagePreferences(ctx, tx, identity, organization.ID)
+	if err != nil {
+		return fmt.Errorf("cannot load email language: %w", err)
+	}
+
+	emailPresenter := emails.NewPresenterFromConfig(emailPresenterCfg, recipientName).
+		WithLanguage(emails.ResolveLanguage(languages...))
 
 	subject, textBody, htmlBody, err := emailPresenter.RenderCompliancePortalAccess(ctx, organization.Name)
 	if err != nil {

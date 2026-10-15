@@ -30,6 +30,7 @@ func NewIdentity(identity *coredata.Identity) *Identity {
 		EmailVerified: identity.EmailAddressVerified,
 		CreatedAt:     identity.CreatedAt,
 		UpdatedAt:     identity.UpdatedAt,
+		Locale:        identity.Locale, // Fork: identity_locale.graphql
 	}
 
 	if identity.AvatarFileID != nil {

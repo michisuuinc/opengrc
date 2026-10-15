@@ -69,6 +69,9 @@ type (
 		// OAuth2ClientIDRaw brands connect authorize magic-link emails.
 		OAuth2ClientIDRaw *string
 		MagicLinkBaseURL  *string
+		// Fork: the requester's browser language, used when no identity
+		// has a saved language.
+		Language *string
 	}
 
 	PasswordResetData struct {
@@ -324,7 +327,8 @@ func (s AuthService) SendPasswordResetInstructionByEmail(
 				return fmt.Errorf("cannot load identity: %w", err)
 			}
 
-			emailPresenter := emails.NewPresenter(s.baseURL, identity.FullName)
+			emailPresenter := emails.NewPresenter(s.baseURL, identity.FullName).
+				WithLanguage(emails.ResolveLanguage(identity.Locale)) // Fork: the recipient's language
 
 			subject, textBody, htmlBody, err := emailPresenter.RenderPasswordReset(
 				ctx,
@@ -623,7 +627,8 @@ func (s AuthService) SendMagicLink(ctx context.Context, req *SendMagicLinkReques
 				emailPresenterCfg.BaseURL = *req.MagicLinkBaseURL
 			}
 
-			emailPresenter := emails.NewPresenterFromConfig(emailPresenterCfg, fullName)
+			emailPresenter := emails.NewPresenterFromConfig(emailPresenterCfg, fullName).
+				WithLanguage(emails.ResolveLanguage(identity.Locale, req.Language)) // Fork: the recipient's language
 
 			subject, textBody, htmlBody, err := emailPresenter.RenderMagicLink(
 				ctx,

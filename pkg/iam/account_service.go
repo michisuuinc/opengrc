@@ -213,7 +213,8 @@ func (s AccountService) ChangeEmail(ctx context.Context, identityID gid.GID, req
 				return fmt.Errorf("cannot update identity: %w", err)
 			}
 
-			emailPresenter := emails.NewPresenter(s.baseURL, identity.FullName)
+			emailPresenter := emails.NewPresenter(s.baseURL, identity.FullName).
+				WithLanguage(emails.ResolveLanguage(identity.Locale)) // Fork: the recipient's language
 
 			subject, textBody, htmlBody, err := emailPresenter.RenderConfirmEmail(ctx, "/auth/verify-email", confirmationToken)
 			if err != nil {
@@ -317,7 +318,8 @@ func (s AccountService) ResendVerificationEmail(ctx context.Context, email mail.
 				return fmt.Errorf("cannot generate confirmation token: %w", err)
 			}
 
-			emailPresenter := emails.NewPresenter(s.baseURL, identity.FullName)
+			emailPresenter := emails.NewPresenter(s.baseURL, identity.FullName).
+				WithLanguage(emails.ResolveLanguage(identity.Locale)) // Fork: the recipient's language
 
 			subject, textBody, htmlBody, err := emailPresenter.RenderConfirmEmail(ctx, "/auth/verify-email", confirmationToken)
 			if err != nil {

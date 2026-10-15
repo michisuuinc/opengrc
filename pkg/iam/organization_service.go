@@ -573,7 +573,14 @@ func (s *OrganizationService) InviteUser(
 				return fmt.Errorf("cannot generate invitation token: %w", err)
 			}
 
-			emailPresenter := emails.NewPresenter(s.baseURL, profile.FullName)
+			// Fork: the email is in the member's language.
+			languages, err := coredata.MembershipProfileLanguagePreferences(ctx, tx, profile)
+			if err != nil {
+				return fmt.Errorf("cannot load email language: %w", err)
+			}
+
+			emailPresenter := emails.NewPresenter(s.baseURL, profile.FullName).
+				WithLanguage(emails.ResolveLanguage(languages...))
 
 			subject, textBody, htmlBody, err := emailPresenter.RenderInvitation(
 				ctx,
