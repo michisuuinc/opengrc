@@ -21,6 +21,7 @@
 import { usePageTitle } from "@probo/hooks";
 import {
   Button,
+  IconArrowDown,
   IconPageTextLine,
   IconPlusLarge,
   IconUpload,
@@ -49,6 +50,7 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { FormRiskDialog } from "./_components/FormRiskDialog";
 import { PublishRiskListDialog } from "./_components/PublishRiskListDialog";
 import { RiskRow } from "./_components/RiskRow";
+import { useExportRiskPrivacySheet } from "./_lib/useExportRiskPrivacySheet";
 
 export const risksPageQuery = graphql`
   query RisksPageQuery($organizationId: ID!) {
@@ -116,6 +118,8 @@ export default function RisksPage(props: RisksPageProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
+  const [exportRiskPrivacy, isExportingRiskPrivacy]
+    = useExportRiskPrivacySheet(organizationId);
 
   const queryData = usePreloadedQuery<RisksPageQuery>(risksPageQuery, props.queryRef);
   const { data: fragmentData, ...pagination } = usePaginationFragment<
@@ -207,6 +211,17 @@ export default function RisksPage(props: RisksPageProps) {
               {t("risksPage.actions.document")}
             </Button>
           )}
+          <Button
+            variant="secondary"
+            icon={IconArrowDown}
+            disabled={isExportingRiskPrivacy}
+            onClick={() => {
+              // useMutation already shows the error toast.
+              void exportRiskPrivacy().catch(() => {});
+            }}
+          >
+            {t("riskPrivacy.actions.export")}
+          </Button>
           {canPublishRisk && (
             <PublishRiskListDialog
               organizationId={organizationId}

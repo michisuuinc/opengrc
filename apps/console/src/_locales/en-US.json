@@ -2462,6 +2462,35 @@
       "export": "Failed to export the register"
     }
   },
+  "riskPrivacy": {
+    "title": "PrivacyMark risk analysis items",
+    "description": "Items of the risk analysis (リスク分析表): the stages of the personal information lifecycle and the register entries (processing activities) this risk applies to. They are included in the Excel export.",
+    "fileName": "risk-analysis",
+    "fields": {
+      "lifecycleStages": "Stages",
+      "processingActivities": "Register entries (processing activities)"
+    },
+    "stages": {
+      "COLLECTION": "Collection and input",
+      "TRANSFER": "Transfer and transmission",
+      "USE": "Use and processing",
+      "STORAGE": "Storage and backup",
+      "DISPOSAL": "Erasure and disposal"
+    },
+    "emptyProcessingActivities": "There are no processing activities yet. Add processing activities first.",
+    "actions": {
+      "save": "Save risk analysis items",
+      "saving": "Saving...",
+      "export": "Export risk analysis (Excel)"
+    },
+    "messages": {
+      "saved": "Risk analysis items saved"
+    },
+    "errors": {
+      "save": "Failed to save risk analysis items",
+      "export": "Failed to export the risk analysis"
+    }
+  },
   "createProcessingActivityDialog": {
     "breadcrumb": { "activities": "Processing Activities", "create": "Create Processing Activity" },
     "messages": { "success": "Success", "error": "Error", "created": "Processing activity created successfully" },
