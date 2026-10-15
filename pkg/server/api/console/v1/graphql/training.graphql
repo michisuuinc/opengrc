@@ -1,0 +1,265 @@
+# Copyright (c) 2026 MICHISUU Inc.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+# Training (教育) for the Japanese PrivacyMark (fork: michisuuinc/opengrc).
+# Dates without a time (startsOn, endsOn, attendedOn) are "YYYY-MM-DD"
+# strings; the plan's timeZone decides which signatures fall in the period.
+
+enum TrainingPlanKind @goModel(model: "go.probo.inc/probo/pkg/coredata.TrainingPlanKind") {
+    PERIODIC @goEnum(value: "go.probo.inc/probo/pkg/coredata.TrainingPlanKindPeriodic")
+    ONBOARDING @goEnum(value: "go.probo.inc/probo/pkg/coredata.TrainingPlanKindOnboarding")
+    ROLE_BASED @goEnum(value: "go.probo.inc/probo/pkg/coredata.TrainingPlanKindRoleBased")
+    AD_HOC @goEnum(value: "go.probo.inc/probo/pkg/coredata.TrainingPlanKindAdHoc")
+}
+
+enum TrainingPlanMethod @goModel(model: "go.probo.inc/probo/pkg/coredata.TrainingPlanMethod") {
+    CLASSROOM @goEnum(value: "go.probo.inc/probo/pkg/coredata.TrainingPlanMethodClassroom")
+    ONLINE @goEnum(value: "go.probo.inc/probo/pkg/coredata.TrainingPlanMethodOnline")
+    E_LEARNING @goEnum(value: "go.probo.inc/probo/pkg/coredata.TrainingPlanMethodELearning")
+    MATERIALS @goEnum(value: "go.probo.inc/probo/pkg/coredata.TrainingPlanMethodMaterials")
+}
+
+enum TrainingParticipantStatus @goModel(model: "go.probo.inc/probo/pkg/coredata.TrainingParticipantStatus") {
+    COMPLETED @goEnum(value: "go.probo.inc/probo/pkg/coredata.TrainingParticipantStatusCompleted")
+    TEST_PENDING @goEnum(value: "go.probo.inc/probo/pkg/coredata.TrainingParticipantStatusTestPending")
+    FAILED @goEnum(value: "go.probo.inc/probo/pkg/coredata.TrainingParticipantStatusFailed")
+    NOT_ATTENDED @goEnum(value: "go.probo.inc/probo/pkg/coredata.TrainingParticipantStatusNotAttended")
+}
+
+enum TrainingAttendanceSource @goModel(model: "go.probo.inc/probo/pkg/coredata.TrainingAttendanceSource") {
+    SIGNATURE @goEnum(value: "go.probo.inc/probo/pkg/coredata.TrainingAttendanceSourceSignature")
+    MANUAL @goEnum(value: "go.probo.inc/probo/pkg/coredata.TrainingAttendanceSourceManual")
+}
+
+enum TrainingPlanOrderField @goModel(model: "go.probo.inc/probo/pkg/coredata.TrainingPlanOrderField") {
+    CREATED_AT @goEnum(value: "go.probo.inc/probo/pkg/coredata.TrainingPlanOrderFieldCreatedAt")
+    STARTS_ON @goEnum(value: "go.probo.inc/probo/pkg/coredata.TrainingPlanOrderFieldStartsOn")
+    NAME @goEnum(value: "go.probo.inc/probo/pkg/coredata.TrainingPlanOrderFieldName")
+}
+
+input TrainingPlanOrder
+    @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrainingPlanOrderBy") {
+    direction: OrderDirection!
+    field: TrainingPlanOrderField!
+}
+
+input TrainingPlanFilter {
+    fiscalYear: Int
+}
+
+type TrainingPlan implements Node {
+    id: ID!
+    fiscalYear: Int!
+    name: String!
+    kind: TrainingPlanKind!
+    description: String!
+    method: TrainingPlanMethod!
+    instructor: String!
+    startsOn: String!
+    endsOn: String!
+    timeZone: String!
+    testRequired: Boolean!
+    passScore: Int
+    materials: [TrainingPlanMaterial!]! @goField(forceResolver: true)
+    participants(status: TrainingParticipantStatus): [TrainingParticipant!]!
+        @goField(forceResolver: true)
+    summary: TrainingPlanSummary! @goField(forceResolver: true)
+    organization: Organization! @goField(forceResolver: true)
+    createdAt: Datetime!
+    updatedAt: Datetime!
+
+    permission(action: String!): Boolean! @goField(forceResolver: true)
+}
+
+type TrainingPlanMaterial {
+    documentId: ID!
+    title: String!
+}
+
+type TrainingPlanSummary {
+    totalCount: Int!
+    completedCount: Int!
+    notAttendedCount: Int!
+}
+
+type TrainingParticipant implements Node {
+    id: ID!
+    profileId: ID!
+    fullName: String!
+    emailAddress: String!
+    department: String
+    status: TrainingParticipantStatus!
+    attendedOn: String
+    attendanceSource: TrainingAttendanceSource
+    signedMaterialCount: Int!
+    "Materials signed only outside the period; they need a new version to be signed again."
+    signedOutsidePeriodCount: Int!
+    manualAttendedOn: String
+    testScore: Int
+    "The result that counts: entered by hand, or derived from the score."
+    testPassed: Boolean
+    "The result entered by hand, if any."
+    manualTestPassed: Boolean
+    note: String!
+}
+
+type TrainingPlanConnection
+    @goModel(model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrainingPlanConnection") {
+    totalCount: Int! @goField(forceResolver: true)
+    edges: [TrainingPlanEdge!]!
+    pageInfo: PageInfo!
+}
+
+type TrainingPlanEdge {
+    cursor: CursorKey!
+    node: TrainingPlan!
+}
+
+input CreateTrainingPlanInput {
+    organizationId: ID!
+    fiscalYear: Int!
+    name: String!
+    kind: TrainingPlanKind!
+    description: String
+    method: TrainingPlanMethod!
+    instructor: String
+    startsOn: String!
+    endsOn: String!
+    timeZone: String!
+    testRequired: Boolean!
+    passScore: Int
+}
+
+input UpdateTrainingPlanInput {
+    trainingPlanId: ID!
+    fiscalYear: Int
+    name: String
+    kind: TrainingPlanKind
+    description: String
+    method: TrainingPlanMethod
+    instructor: String
+    startsOn: String
+    endsOn: String
+    timeZone: String
+    testRequired: Boolean
+    "Omitted keeps the pass score; null clears it."
+    passScore: Int @goField(omittable: true)
+}
+
+input DeleteTrainingPlanInput {
+    trainingPlanId: ID!
+}
+
+input SetTrainingPlanMaterialsInput {
+    trainingPlanId: ID!
+    documentIds: [ID!]!
+}
+
+input AddTrainingParticipantsInput {
+    trainingPlanId: ID!
+    profileIds: [ID!]!
+}
+
+input RemoveTrainingParticipantInput {
+    trainingParticipantId: ID!
+}
+
+"All fields are replaced: null or omitted clears them."
+input UpdateTrainingParticipantInput {
+    trainingParticipantId: ID!
+    attendedOn: String
+    testScore: Int
+    "Null or omitted derives the result from testScore and the plan's passScore."
+    testPassed: Boolean
+    note: String
+}
+
+input RequestTrainingSignaturesInput {
+    trainingPlanId: ID!
+}
+
+input ExportTrainingRecordsInput {
+    organizationId: ID!
+    fiscalYear: Int
+}
+
+type CreateTrainingPlanPayload {
+    trainingPlanEdge: TrainingPlanEdge!
+}
+
+type UpdateTrainingPlanPayload {
+    trainingPlan: TrainingPlan!
+}
+
+type DeleteTrainingPlanPayload {
+    deletedTrainingPlanId: ID!
+}
+
+type SetTrainingPlanMaterialsPayload {
+    trainingPlan: TrainingPlan!
+}
+
+type AddTrainingParticipantsPayload {
+    trainingPlan: TrainingPlan!
+    addedCount: Int!
+}
+
+type RemoveTrainingParticipantPayload {
+    trainingPlan: TrainingPlan!
+    deletedTrainingParticipantId: ID!
+}
+
+type UpdateTrainingParticipantPayload {
+    trainingPlan: TrainingPlan!
+}
+
+type RequestTrainingSignaturesPayload {
+    trainingPlan: TrainingPlan!
+    requestedCount: Int!
+}
+
+type ExportTrainingRecordsPayload {
+    "The training records as an Excel file in a data: URL."
+    data: String!
+}
+
+extend type Mutation {
+    createTrainingPlan(input: CreateTrainingPlanInput!): CreateTrainingPlanPayload!
+    updateTrainingPlan(input: UpdateTrainingPlanInput!): UpdateTrainingPlanPayload!
+    deleteTrainingPlan(input: DeleteTrainingPlanInput!): DeleteTrainingPlanPayload!
+    setTrainingPlanMaterials(
+        input: SetTrainingPlanMaterialsInput!
+    ): SetTrainingPlanMaterialsPayload!
+    addTrainingParticipants(
+        input: AddTrainingParticipantsInput!
+    ): AddTrainingParticipantsPayload!
+    removeTrainingParticipant(
+        input: RemoveTrainingParticipantInput!
+    ): RemoveTrainingParticipantPayload!
+    updateTrainingParticipant(
+        input: UpdateTrainingParticipantInput!
+    ): UpdateTrainingParticipantPayload!
+    requestTrainingSignatures(
+        input: RequestTrainingSignaturesInput!
+    ): RequestTrainingSignaturesPayload!
+    exportTrainingRecords(
+        input: ExportTrainingRecordsInput!
+    ): ExportTrainingRecordsPayload!
+}

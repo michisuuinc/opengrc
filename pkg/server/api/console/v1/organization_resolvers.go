@@ -291,6 +291,11 @@ func (r *organizationResolver) Assets(ctx context.Context, obj *types.Organizati
 	return types.NewAssetConnection(page, r, obj.ID), nil
 }
 
+// TrainingPlans is the resolver for the trainingPlans field.
+func (r *organizationResolver) TrainingPlans(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TrainingPlanOrderBy, filter *types.TrainingPlanFilter) (*types.TrainingPlanConnection, error) {
+	return r.trainingPlans(ctx, obj, first, after, last, before, orderBy, filter, r)
+}
+
 // DataListDocument is the resolver for the dataListDocument field.
 func (r *organizationResolver) DataListDocument(ctx context.Context, obj *types.Organization) (*types.Document, error) {
 	scope, err := r.authorize(ctx, obj.ID, probo.ActionDocumentGet)

@@ -167,6 +167,11 @@ const (
 	_                                                uint16 = 135 // LinearWebhookEventEntityType - removed
 	ConnectorAccountEntityType                       uint16 = 136
 	EmployeePortalEntityType                         uint16 = 137
+
+	// Fork-only entity types (michisuuinc/opengrc) start at 1000 so they never
+	// collide with the numbers upstream adds next.
+	TrainingPlanEntityType        uint16 = 1000
+	TrainingParticipantEntityType uint16 = 1001
 )
 
 func NewEntityFromID(id gid.GID) (any, bool) {
@@ -425,6 +430,10 @@ func NewEntityFromID(id gid.GID) (any, bool) {
 		return &ConnectorAccount{ID: id}, true
 	case EmployeePortalEntityType:
 		return &EmployeePortal{ID: id}, true
+	case TrainingPlanEntityType:
+		return &TrainingPlan{ID: id}, true
+	case TrainingParticipantEntityType:
+		return &TrainingParticipant{ID: id}, true
 	default:
 		return nil, false
 	}

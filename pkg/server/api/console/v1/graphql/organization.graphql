@@ -156,6 +156,15 @@ type Organization implements Node {
         orderBy: AssetOrder
     ): AssetConnection! @goField(forceResolver: true)
 
+    trainingPlans(
+        first: Int
+        after: CursorKey
+        last: Int
+        before: CursorKey
+        orderBy: TrainingPlanOrder
+        filter: TrainingPlanFilter
+    ): TrainingPlanConnection! @goField(forceResolver: true)
+
     dataListDocument: Document @goField(forceResolver: true)
 
     data(
