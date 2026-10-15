@@ -28,7 +28,10 @@ import {
   checkLocale,
   checkStandalone,
   compareFrameworks,
+  compareLocalizedData,
+  compareRiskTemplates,
   FRAMEWORKS_DIR,
+  parseLocalizedData,
   STANDALONE_DIR,
   validateFramework,
   validateInternalControls,
@@ -151,4 +154,91 @@ test("validateInternalControls reports duplicate reference ids and bad evidence"
     internalControl({ tasks: [{ "reference-id": "pm-2-t", "name": "作業", "requested-evidences": [{ "reference-id": "pm-2-e", "type": "PDF", "name": "記録" }] }] }),
   ];
   assert.deepEqual(kinds(validateInternalControls(data, catalog)), ["duplicate:pm-1", "evidence:pm-2-e"]);
+});
+
+const riskSource = [
+  { category: "Finance", name: "Cash flow", description: "Late payments." },
+  { category: "Finance", name: "Fraud", description: "Fake invoices." },
+  { category: "Technology", name: "Outage", description: "Servers fail." },
+];
+
+test("matching risk templates have no issues", () => {
+  const target = [
+    { category: "財務", name: "資金繰り", description: "支払いの遅れ。" },
+    { category: "財務", name: "不正", description: "偽の請求書。" },
+    { category: "技術", name: "障害", description: "サーバーの停止。" },
+  ];
+  assert.deepEqual(compareRiskTemplates(riskSource, target), []);
+});
+
+test("reports a different number of risk templates", () => {
+  const target = riskSource.slice(0, 2);
+  assert.deepEqual(kinds(compareRiskTemplates(riskSource, target)), ["count:risks"]);
+});
+
+test("reports inconsistent risk categories, empty fields and duplicate names", () => {
+  const target = [
+    { category: "財務", name: "資金繰り", description: "支払いの遅れ。" },
+    { category: "金融", name: "資金繰り", description: "" },
+    { category: "財務", name: "障害", description: "サーバーの停止。" },
+  ];
+  assert.deepEqual(kinds(compareRiskTemplates(riskSource, target)), [
+    "category:#1",
+    "empty:#1",
+    "category:#2",
+  ]);
+});
+
+test("reports duplicate risk names within a category", () => {
+  const target = [
+    { category: "財務", name: "資金繰り", description: "支払いの遅れ。" },
+    { category: "財務", name: "資金繰り", description: "偽の請求書。" },
+    { category: "技術", name: "障害", description: "サーバーの停止。" },
+  ];
+  assert.deepEqual(kinds(compareRiskTemplates(riskSource, target)), ["duplicate:#1"]);
+});
+
+const localizedSource = `
+const LOCALIZED_FRAMEWORKS: Readonly<Record<string, readonly string[]>> = {
+  "ja-JP": ["ISO27001-2022", "ISO27701-2025"],
+};
+
+const LOCALIZED_RISK_TEMPLATES: readonly string[] = ["ja-JP"];
+
+const JURISDICTION_FRAMEWORKS: Readonly<Record<string, string>> = {
+  "PMARK-JISQ15001-2023": "jp/PMARK-JISQ15001-2023.json",
+};
+`;
+
+test("parses the lists in localizedData.ts", () => {
+  assert.deepEqual(parseLocalizedData(localizedSource), {
+    frameworks: { "ja-JP": ["ISO27001-2022", "ISO27701-2025"] },
+    riskLocales: ["ja-JP"],
+    jurisdictionFiles: ["jp/PMARK-JISQ15001-2023.json"],
+  });
+});
+
+test("localized lists matching the files have no issues", () => {
+  const lists = parseLocalizedData(localizedSource);
+  const disk = {
+    frameworks: { "ja-JP": ["ISO27701-2025", "ISO27001-2022"] },
+    riskLocales: ["ja-JP"],
+    frameworkFiles: ["jp/PMARK-JISQ15001-2023.json"],
+  };
+  assert.deepEqual(compareLocalizedData(lists, disk), []);
+});
+
+test("reports localized lists that drift from the files", () => {
+  const lists = parseLocalizedData(localizedSource);
+  const disk = {
+    frameworks: { "ja-JP": ["ISO27001-2022", "SOC2"] },
+    riskLocales: [],
+    frameworkFiles: [],
+  };
+  assert.deepEqual(kinds(compareLocalizedData(lists, disk)), [
+    "unlisted:ja-JP/SOC2",
+    "missing:ja-JP/ISO27701-2025",
+    "missing:risks/ja-JP",
+    "missing:jp/PMARK-JISQ15001-2023.json",
+  ]);
 });

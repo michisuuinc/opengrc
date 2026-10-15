@@ -49,6 +49,7 @@ import {
   useDeleteFrameworkMutation,
 } from "#/hooks/graph/FrameworkGraph";
 import { useMutationWithToasts } from "#/hooks/useMutationWithToasts";
+import { frameworkDataPath } from "#/lib/i18n/localizedData";
 
 import { FrameworkFormDialog } from "./dialogs/FrameworkFormDialog";
 
@@ -73,7 +74,7 @@ const importFrameworkMutation = graphql`
 `;
 
 export default function FrameworksPage(props: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   usePageTitle(t("frameworksPage.title"));
   const data = usePreloadedQuery<FrameworkGraphListQuery>(frameworksQuery, props.queryRef);
   const connectionId = data.organization.frameworks!.__id;
@@ -100,8 +101,8 @@ export default function FrameworksPage(props: Props) {
     try {
       setUploading(true);
       const fileName = `${name}.json`;
-      const json = await fetch(`/data/frameworks/${fileName}`).then(res =>
-        res.text(),
+      const json = await fetch(frameworkDataPath(name, i18n.language)).then(
+        res => res.text(),
       );
       const file = new File([json], fileName, {
         type: "application/json",

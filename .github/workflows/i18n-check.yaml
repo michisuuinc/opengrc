@@ -32,6 +32,7 @@ on:
       - "apps/*/src/**/_locales/*.json"
       - "apps/console/public/data/frameworks/**"
       - "apps/console/public/data/internal-controls/**"
+      - "apps/console/public/data/risks/**"
       - "scripts/i18n/**"
       - ".github/workflows/i18n-check.yaml"
 
