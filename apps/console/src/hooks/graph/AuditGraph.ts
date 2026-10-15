@@ -44,6 +44,10 @@ export const auditNodeQuery = graphql`
     node(id: $auditId) {
       ... on Audit {
         id
+        # Fork: the internal audit report card needs the member and finding
+        # lists.
+        canViewPrivacyReport: permission(action: "iam:membership-profile:list")
+        canListFindings: permission(action: "core:finding:list")
         name
         firm
         validity {

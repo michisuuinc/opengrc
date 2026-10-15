@@ -61,6 +61,7 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { z } from "#/lib/zod";
 
 import { FindingAuditsCard } from "./_components/FindingAuditsCard";
+import { FindingPrivacyCard } from "./_components/FindingPrivacyCard";
 import { FindingsConnectionKey } from "./FindingsPage";
 
 export const findingDetailsPageQuery = graphql`
@@ -89,6 +90,7 @@ export const findingDetailsPageQuery = graphql`
         canUpdate: permission(action: "core:finding:update")
         canDelete: permission(action: "core:finding:delete")
         canListAudits: permission(action: "core:audit:list")
+        ...FindingPrivacyCardFragment
       }
     }
   }
@@ -119,6 +121,8 @@ const updateFindingMutation = graphql`
           name
         }
         updatedAt
+        # Fork: the category that follows the kind changes with it.
+        ...FindingPrivacyCardFragment
       }
     }
   }
@@ -520,6 +524,10 @@ export default function FindingDetailsPage(props: Props) {
             </div>
           </form>
         </Card>
+
+        <div className="mt-6">
+          <FindingPrivacyCard findingKey={finding} />
+        </div>
       </div>
     </div>
   );
