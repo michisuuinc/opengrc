@@ -19,6 +19,12 @@ SPDX-License-Identifier: MIT
 | `pkg/coredata/evidence.go` | `Evidence.Upsert` の INSERT に `organization_id` を追加 | 内部統制の取り込みで「求める証跡」を登録すると、NOT NULL 制約の違反でエラーになっていた | [#2](https://github.com/michisuuinc/opengrc/pull/2) | 上流の `Evidence.Upsert` に `organization_id` があるか |
 | `pkg/probo/internal_control_service.go` | 取り込み時の証跡に `OrganizationID` と `InternalControlID` を設定 | 同上。`internal_control_id` が空で外部キー制約の違反になっていた | [#2](https://github.com/michisuuinc/opengrc/pull/2) | 上流の `Import` で証跡にこの 2 つを設定しているか |
 | `e2e/console/internal_control_test.go` | テスト `TestInternalControl_ImportWithRequestedEvidences` を追加 | 上の修正の確認（ファイルの末尾に追加しただけ） | [#2](https://github.com/michisuuinc/opengrc/pull/2) | 上流が修正を取り込んだら、上流のテストに合わせて削除してよい |
+| `pkg/server/api/console/v1/graphql/processing_activity.graphql` | `ProcessingActivity` に `ledgerDetails` フィールドを 1 つ追加 | 個人情報管理台帳（B1）。GraphQL の規約で `extend type` が Mutation にしか使えないため、型の定義に直接追加した | （このブランチ） | 上流で同じ名前のフィールドが追加されていないか |
+| `pkg/server/api/console/v1/processing_activity_resolvers.go` | `LedgerDetails` リゾルバ（上の追加で gqlgen が生成する関数） | 同上 | （このブランチ） | 同上 |
+| `pkg/probo/service.go` | `ProcessingActivityLedger` サービスの登録（2 行） | 同上 | （このブランチ） | 衝突したら 2 行を入れ直す |
+| `apps/console/src/hooks/graph/ProcessingActivityGraph.ts`、`.../processingActivities/ProcessingActivityDetailsPage.tsx`、`.../ProcessingActivitiesPage.tsx` | 台帳の項目のカードと「台帳を出力（Excel）」ボタンを差し込む（数行ずつ） | 同上 | （このブランチ） | 衝突したら差し込み位置を合わせ直す |
+| `apps/console/src/_locales/en-US.json` | キー `processingActivityLedger` を追加 | 同上（fr-FR・nl-NL は英語にフォールバック） | （このブランチ） | 衝突したらブロックを入れ直す |
+| `go.mod`、`go.sum` | `github.com/xuri/excelize/v2` を追加 | Excel 出力（B0）。BSD-3-Clause。依存の mscfb・msoleps は Apache-2.0、go-deepcopy は MIT | （このブランチ） | 上流が同じライブラリを入れたら上流の版に合わせる |
 
 ## 新しく追加したもの
 
@@ -32,6 +38,7 @@ SPDX-License-Identifier: MIT
 | 文書 | `docs/ja/` | 訳語表（`glossary.md`）、用語解説（`terms.md`）、この一覧、Pマークの方針・規程・公表文・書式のひな形（`templates/`、18 本）、利用マニュアル（`manual/`） | [#1](https://github.com/michisuuinc/opengrc/pull/1)、[#5](https://github.com/michisuuinc/opengrc/pull/5) ほか |
 | チェック | `scripts/i18n/`、`.github/workflows/i18n-check.yaml` | 翻訳ファイル・フレームワーク・内部統制のデータが英語版や取り込み形式と食い違っていないかの検査 | [#1](https://github.com/michisuuinc/opengrc/pull/1)、[#3](https://github.com/michisuuinc/opengrc/pull/3) |
 | 生成ツール | `cmd/ja-docgen/`、`scripts/ja-docs/`、`docs/ja/templates/config.example.yaml`、`docs/ja/templates/variables.md`、`.github/workflows/ja-templates-check.yaml` | 文書ひな形に会社の値を入れて完成版を作るツール、完成版を OpenGRC に登録して統制・内部統制に紐付けるスクリプト、ひな形の検査 | [#10](https://github.com/michisuuinc/opengrc/pull/10)〜[#14](https://github.com/michisuuinc/opengrc/pull/14) |
+| 個人情報管理台帳 | `pkg/xlsxexport/`、`pkg/coredata/processing_activity_ledger_details.go`、マイグレーション `20261015T025623Z.sql`（テーブル `processing_activity_ledger_details`）、`pkg/probo/processing_activity_ledger_*.go`、`.../graphql/processing_activity_ledger.graphql` とリゾルバ、`.../processingActivities/_components/ProcessingActivityLedgerCard.tsx`・`_lib/`、`e2e/console/processing_activity_ledger_test.go`、マニュアル第 3 章 | Excel 出力の共通部分（B0）と、Pマークの台帳の追加項目（担当部門・件数・取得の方法・保管の場所と媒体・アクセスできる人の範囲・廃棄の方法）・台帳の Excel 出力（B1）。今は GraphQL と画面だけで、MCP・CLI・n8n には未対応（上流の規約 `contrib/claude/api-surface.md` との差。上流に出すときに追加する） | （このブランチ） |
 
 ## リポジトリの設定（コード以外）
 
