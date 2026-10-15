@@ -55,6 +55,8 @@ export const rightsRequestNodeQuery = graphql`
         actionTaken
         canUpdate: permission(action: "core:rights-request:update")
         canDelete: permission(action: "core:rights-request:delete")
+        # Fork: the PrivacyMark record card needs the member list.
+        canViewPrivacyRecord: permission(action: "iam:membership-profile:list")
         organization {
           id
           name
