@@ -60,6 +60,10 @@ type (
 		TSATime          string
 		TSASerial        string
 		Events           []certificateEvent
+		// Fork: the language and labels of the certificate
+		// (certificate_labels.go).
+		Language string
+		L        certificateLabels
 	}
 
 	certificateEvent struct {
@@ -83,7 +87,12 @@ func (g *CertificateGenerator) Generate(
 	signature *coredata.ElectronicSignature,
 	events coredata.ElectronicSignatureEvents,
 ) (io.Reader, error) {
+	language := certificateLanguage(signature)
+	labels := certificateLabelsFor(language)
+
 	data := certificateData{
+		Language:         language,
+		L:                labels,
 		SignatureID:      signature.ID.String(),
 		OrganizationID:   signature.OrganizationID.String(),
 		SignerFullName:   ref.UnrefOrZero(signature.SignerFullName),
@@ -91,7 +100,7 @@ func (g *CertificateGenerator) Generate(
 		SignerIPAddress:  ref.UnrefOrZero(signature.SignerIPAddress),
 		SignerUserAgent:  ref.UnrefOrZero(signature.SignerUserAgent),
 		DocumentType:     signature.DocumentType.String(),
-		DocumentTypeName: signature.DocumentType.DisplayName(),
+		DocumentTypeName: labelOr(labels.DocumentTypes, signature.DocumentType, signature.DocumentType.DisplayName()),
 		FileID:           signature.FileID.String(),
 		FileHash:         ref.UnrefOrZero(signature.FileHash),
 		Seal:             ref.UnrefOrZero(signature.Seal),
@@ -122,8 +131,8 @@ func (g *CertificateGenerator) Generate(
 		data.Events = append(
 			data.Events,
 			certificateEvent{
-				EventType:  evt.EventType.String(),
-				Source:     evt.EventSource.String(),
+				EventType:  labelOr(labels.EventTypes, evt.EventType, evt.EventType.String()),
+				Source:     labelOr(labels.EventSources, evt.EventSource, evt.EventSource.String()),
 				Actor:      evt.ActorEmail,
 				IPAddress:  evt.ActorIPAddress,
 				OccurredAt: evt.OccurredAt.UTC().Format(time.RFC3339),

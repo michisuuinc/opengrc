@@ -399,14 +399,14 @@
                 <div class="document-meta">
                     <table class="meta-table">
                         <tr>
-                            <td>Classification</td>
+                            <td>{{.Labels.Classification}}</td>
                             <td>
-                                <span class="classification">{{.Classification | classificationString}}</span>
+                                <span class="classification">{{classificationLabel .Labels .Classification}}</span>
                             </td>
                         </tr>
                         {{- if gt (len .Approvers) 0}}
                         <tr>
-                            <td>Approver{{- if gt (len .Approvers) 1}}s{{- end}}</td>
+                            <td>{{- if gt (len .Approvers) 1}}{{.Labels.Approvers}}{{- else}}{{.Labels.Approver}}{{- end}}</td>
                             <td>
                                 {{- if eq (len .Approvers) 1}}
                                 {{index .Approvers 0}}
@@ -421,13 +421,13 @@
                         </tr>
                         {{- end}}
                         <tr>
-                            <td>Version:</td>
+                            <td>{{.Labels.Version}}</td>
                             <td>{{.Major}}.{{.Minor}}</td>
                         </tr>
                         {{- if .PublishedAt}}
                         <tr>
-                            <td>Published</td>
-                            <td>{{.PublishedAt.Format "January 2, 2006"}}</td>
+                            <td>{{.Labels.Published}}</td>
+                            <td>{{.Labels.LongDateOf .PublishedAt}}</td>
                         </tr>
                         {{- end}}
                     </table>
@@ -440,14 +440,14 @@
 
             {{- if .Signatures}}
             <div class="signatures-section">
-                <h2 class="signatures-title">Document Signatures</h2>
+                <h2 class="signatures-title">{{$.Labels.DocumentSignatures}}</h2>
                 <table class="signatures-table">
                     <thead>
                         <tr>
-                            <th>Signatory</th>
-                            <th>Status</th>
-                            <th>Requested Date</th>
-                            <th>Signed Date</th>
+                            <th>{{$.Labels.Signatory}}</th>
+                            <th>{{$.Labels.Status}}</th>
+                            <th>{{$.Labels.RequestedDate}}</th>
+                            <th>{{$.Labels.SignedDate}}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -456,15 +456,15 @@
                             <td>{{.SignedBy}}</td>
                             <td>
                                 {{- if eq (string .State) "SIGNED"}}
-                                <span class="signature-signed">{{string .State}}</span>
+                                <span class="signature-signed">{{stateLabel $.Labels .State}}</span>
                                 {{- else}}
-                                <span class="signature-requested">{{string .State}}</span>
+                                <span class="signature-requested">{{stateLabel $.Labels .State}}</span>
                                 {{- end}}
                             </td>
-                            <td>{{.RequestedAt.Format "Jan 2, 2006"}}</td>
+                            <td>{{$.Labels.ShortDateOf .RequestedAt}}</td>
                             <td>
                                 {{- if .SignedAt}}
-                                {{.SignedAt.Format "Jan 2, 2006"}}
+                                {{$.Labels.ShortDateOf .SignedAt}}
                                 {{- else}}
                                 -
                                 {{- end}}

@@ -59,14 +59,14 @@
 </head>
 
 <body>
-    <h2 class="signatures-title">Document Signatures</h2>
+    <h2 class="signatures-title">{{$.Labels.DocumentSignatures}}</h2>
     <table class="signatures-table">
         <thead>
             <tr>
-                <th>Signatory</th>
-                <th>Status</th>
-                <th>Requested Date</th>
-                <th>Signed Date</th>
+                <th>{{$.Labels.Signatory}}</th>
+                <th>{{$.Labels.Status}}</th>
+                <th>{{$.Labels.RequestedDate}}</th>
+                <th>{{$.Labels.SignedDate}}</th>
             </tr>
         </thead>
         <tbody>
@@ -75,15 +75,15 @@
                 <td>{{.SignedBy}}</td>
                 <td>
                     {{- if eq (string .State) "SIGNED"}}
-                    <span class="signature-signed">{{string .State}}</span>
+                    <span class="signature-signed">{{stateLabel $.Labels .State}}</span>
                     {{- else}}
-                    <span class="signature-requested">{{string .State}}</span>
+                    <span class="signature-requested">{{stateLabel $.Labels .State}}</span>
                     {{- end}}
                 </td>
-                <td>{{.RequestedAt.Format "Jan 2, 2006"}}</td>
+                <td>{{$.Labels.ShortDateOf .RequestedAt}}</td>
                 <td>
                     {{- if .SignedAt}}
-                    {{.SignedAt.Format "Jan 2, 2006"}}
+                    {{$.Labels.ShortDateOf .SignedAt}}
                     {{- else}}
                     -
                     {{- end}}

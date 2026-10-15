@@ -38,3 +38,17 @@ func DetectLanguage(texts ...string) string {
 
 	return "en"
 }
+
+// DetectTitleLanguage is DetectLanguage for a short title, the only text
+// some outputs have. Japanese titles are often kanji only, such as
+// 個人情報保護方針, so kanji counts as Japanese here too. Chinese titles are
+// then taken as Japanese, which only changes the labels around them.
+func DetectTitleLanguage(title string) string {
+	for _, r := range title {
+		if unicode.In(r, unicode.Hiragana, unicode.Katakana, unicode.Han) {
+			return "ja"
+		}
+	}
+
+	return "en"
+}

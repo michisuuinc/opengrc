@@ -51,6 +51,9 @@ var (
 		"string":               func(v fmt.Stringer) string { return v.String() },
 		"lower":                func(s string) string { return strings.ToLower(s) },
 		"classificationString": func(c Classification) string { return string(c) },
+		// Fork: labels of the document's language (labels.go).
+		"classificationLabel": func(l Labels, c Classification) string { return label(l.Classifications, c, string(c)) },
+		"stateLabel":          func(l Labels, s fmt.Stringer) string { return label(l.States, s.String(), s.String()) },
 		"boolToYesNo": func(b *bool) string {
 			if b == nil {
 				return ""
@@ -226,6 +229,7 @@ type (
 		CreatedAt        time.Time
 		TotalControls    int
 		Rows             []SOARow
+		Language         string // Fork: "ja" picks the Japanese template; detected from the controls
 	}
 
 	SOARow struct {
@@ -676,9 +680,11 @@ func RenderHTML(data DocumentData) ([]byte, error) {
 	page := struct {
 		DocumentData
 		BodyHTML template.HTML
+		Labels   Labels
 	}{
 		DocumentData: data,
 		BodyHTML:     ProseMirrorJSONToHTML(data.Content),
+		Labels:       LabelsFor(data.Language),
 	}
 
 	var buf bytes.Buffer
@@ -694,8 +700,16 @@ func RenderSignaturePageHTML(data SignaturePageData) ([]byte, error) {
 		data.Language = "en"
 	}
 
+	page := struct {
+		SignaturePageData
+		Labels Labels
+	}{
+		SignaturePageData: data,
+		Labels:            LabelsFor(data.Language),
+	}
+
 	var buf bytes.Buffer
-	if err := signaturePageTemplate.Execute(&buf, data); err != nil {
+	if err := signaturePageTemplate.Execute(&buf, page); err != nil {
 		return nil, fmt.Errorf("cannot execute signature page template: %w", err)
 	}
 

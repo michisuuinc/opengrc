@@ -1,0 +1,197 @@
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "heading",
+      "attrs": { "level": 1 },
+      "content": [{ "type": "text", "text": "1. 目的" }]
+    },
+    {
+      "type": "paragraph",
+      "content": [{ "type": "text", "text": "この文書は、当組織における管理策の適用宣言書です。各管理策を適用するか適用除外とするかと、法令・規制上の要求事項、契約上の義務、リスクアセスメント、ベストプラクティスとの関係を記録します。" }]
+    },
+    { "type": "horizontalRule" },
+    {
+      "type": "heading",
+      "attrs": { "level": 1 },
+      "content": [{ "type": "text", "text": "2. 管理策" }]
+    },
+    {
+      "type": "table",
+      "content": [
+        {
+          "type": "tableRow",
+          "content": [
+            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 2, "colwidth": [120] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "フレームワーク", "marks": [{ "type": "bold" }] }] }] },
+            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 2, "colwidth": [250] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "管理策", "marks": [{ "type": "bold" }] }] }] },
+            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 2, "colwidth": [70] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "適用", "marks": [{ "type": "bold" }] }] }] },
+            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 2, "colwidth": [130] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "適用除外の根拠", "marks": [{ "type": "bold" }] }] }] },
+            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 2, "colwidth": [90] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "成熟度", "marks": [{ "type": "bold" }] }] }] },
+            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 2, "colwidth": [110] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "未実施の根拠", "marks": [{ "type": "bold" }] }] }] },
+            { "type": "tableHeader", "attrs": { "colspan": 4, "rowspan": 1 }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "適用の根拠", "marks": [{ "type": "bold" }] }] }] }
+          ]
+        },
+        {
+          "type": "tableRow",
+          "content": [
+            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [60] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "法令・規制", "marks": [{ "type": "bold" }] }] }] },
+            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [60] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "契約", "marks": [{ "type": "bold" }] }] }] },
+            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [60] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "ベストプラクティス", "marks": [{ "type": "bold" }] }] }] },
+            { "type": "tableHeader", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [60] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "リスクアセスメント", "marks": [{ "type": "bold" }] }] }] }
+          ]
+        }{{range .Rows}},
+        {
+          "type": "tableRow",
+          "content": [
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [120] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .FrameworkName}} }] }] },
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [250] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json (printf "[%s] " .ControlSection)}}, "marks": [{ "type": "code" }] }, { "type": "text", "text": {{json .ControlName}} }] }] },
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [70] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .Applicability}} }] }] },
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [130] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .Justification}} }] }] },
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [90] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .MaturityLevel}} }] }] },
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [110] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .NotImplJustification}} }] }] },
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [60] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .Regulatory}} }] }] },
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [60] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .Contractual}} }] }] },
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [60] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .BestPractice}} }] }] },
+            { "type": "tableCell", "attrs": { "colspan": 1, "rowspan": 1, "colwidth": [60] }, "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": {{json .RiskAssessment}} }] }] }
+          ]
+        }{{end}}
+      ]
+    },
+    { "type": "horizontalRule" },
+    {
+      "type": "heading",
+      "attrs": { "level": 1 },
+      "content": [{ "type": "text", "text": "3. 用語の説明" }]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 3 },
+      "content": [{ "type": "text", "text": "フレームワーク" }]
+    },
+    {
+      "type": "paragraph",
+      "content": [{ "type": "text", "text": "管理策が属するフレームワーク・規格の名前（例：JIS Q 15001、ISO 27001）。" }]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 3 },
+      "content": [{ "type": "text", "text": "管理策" }]
+    },
+    {
+      "type": "paragraph",
+      "content": [{ "type": "text", "text": "フレームワーク内の管理策の番号と名前。" }]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 3 },
+      "content": [{ "type": "text", "text": "適用" }]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "適用：", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "当組織に適用する管理策。" }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "適用除外：", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "当組織には適用しない管理策（根拠を記載する）。" }] }] }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 3 },
+      "content": [{ "type": "text", "text": "適用除外の根拠" }]
+    },
+    {
+      "type": "paragraph",
+      "content": [{ "type": "text", "text": "管理策を適用除外とした理由。適用する管理策では「-」になる。" }]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 3 },
+      "content": [{ "type": "text", "text": "成熟度" }]
+    },
+    {
+      "type": "paragraph",
+      "content": [{ "type": "text", "text": "管理策の成熟度。CMMI（能力成熟度モデル統合）の 0〜5 の段階で表す。ISO 27001 の 9.1（有効性の測定）のベストプラクティスで、HITRUST CSF などでは必須とされている。" }]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "0 - なし：", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "管理策が実施されていない、又は存在しない。" }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "1 - 初期：", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "場当たり的で、個人の努力に依存している。" }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "2 - 管理されている：", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "プロセスが計画され、追跡されている。" }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "3 - 定義されている：", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "文書化・標準化され、組織に組み込まれている。" }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "4 - 定量的に管理されている：", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "指標と統計的な目標で測定・管理されている。" }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "5 - 最適化されている：", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "定量的な分析に基づいて継続的に改善されている。" }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "-：", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "適用除外の管理策のため、対象外。" }] }] }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 3 },
+      "content": [{ "type": "text", "text": "未実施の根拠" }]
+    },
+    {
+      "type": "paragraph",
+      "content": [{ "type": "text", "text": "成熟度が「0 - なし」の管理策について、実施していない理由。成熟度が 1 以上の管理策と、適用除外の管理策では「-」になる。" }]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 3 },
+      "content": [{ "type": "text", "text": "適用の根拠" }]
+    },
+    {
+      "type": "paragraph",
+      "content": [{ "type": "text", "text": "適用する管理策について、法令・規制上の要求事項、契約上の義務、ベストプラクティス、リスクアセスメントのどれに基づいて含めているかを示す。" }]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 4 },
+      "content": [{ "type": "text", "text": "法令・規制" }]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "はい：", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "法令・規制上の義務に紐付いている。" }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "いいえ：", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "法令・規制上の義務に紐付いていない。" }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "-：", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "適用除外の管理策のため、対象外。" }] }] }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 4 },
+      "content": [{ "type": "text", "text": "契約" }]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "はい：", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "契約上の義務に紐付いている。" }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "いいえ：", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "契約上の義務に紐付いていない。" }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "-：", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "適用除外の管理策のため、対象外。" }] }] }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 4 },
+      "content": [{ "type": "text", "text": "ベストプラクティス" }]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "はい：", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "ベストプラクティスとして推奨されている管理策。" }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "いいえ：", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "ベストプラクティスとされていない。" }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "-：", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "適用除外の管理策のため、対象外。" }] }] }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": { "level": 4 },
+      "content": [{ "type": "text", "text": "リスクアセスメント" }]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "はい：", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "内部統制を通じて、特定したリスクに紐付いている。" }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "いいえ：", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "特定したリスクに紐付いていない。" }] }] },
+        { "type": "listItem", "content": [{ "type": "paragraph", "content": [{ "type": "text", "text": "-：", "marks": [{ "type": "bold" }] }, { "type": "text", "text": "適用除外の管理策のため、対象外。" }] }] }
+      ]
+    }
+  ]
+}
