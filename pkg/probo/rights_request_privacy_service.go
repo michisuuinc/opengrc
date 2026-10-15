@@ -59,6 +59,8 @@ type (
 		AnswerMethod          *coredata.RightsRequestAnswerMethod
 		AnsweredOn            *time.Time
 		ApproverID            *gid.GID
+		FirstRespondedOn      *time.Time
+		FindingID             *gid.GID
 	}
 
 	// ErrRightsRequestRecordInconsistent is a record whose values
@@ -83,6 +85,7 @@ func (r *UpdateRightsRequestPrivacyDetailsRequest) Validate() error {
 	v.Check(r.AnswerMethod, "answer_method", validator.OneOfSlice(coredata.RightsRequestAnswerMethods()))
 	v.Check(r.HandlerID, "handler_id", validator.GID(coredata.MembershipProfileEntityType))
 	v.Check(r.ApproverID, "approver_id", validator.GID(coredata.MembershipProfileEntityType))
+	v.Check(r.FindingID, "finding_id", validator.GID(coredata.FindingEntityType))
 	checkOptionalTrainingText(v, r.TargetDepartment, "target_department", validator.SafeTextNoNewLine(NameMaxLength))
 	checkOptionalTrainingText(v, r.VerificationNote, "verification_note", validator.SafeText(TitleMaxLength))
 	checkOptionalTrainingText(v, r.DecisionReason, "decision_reason", validator.SafeText(ContentMaxLength))
@@ -109,9 +112,9 @@ func (r *UpdateRightsRequestPrivacyDetailsRequest) checkConsistency() error {
 	}
 
 	if r.ReceivedOn != nil {
-		for _, date := range []*time.Time{r.VerifiedOn, r.SupplementRequestedOn, r.AnsweredOn} {
+		for _, date := range []*time.Time{r.VerifiedOn, r.SupplementRequestedOn, r.AnsweredOn, r.FirstRespondedOn} {
 			if date != nil && date.Before(*r.ReceivedOn) {
-				return &ErrRightsRequestRecordInconsistent{Reason: "verification, requests for documents and the answer cannot come before the request was received"}
+				return &ErrRightsRequestRecordInconsistent{Reason: "verification, requests for documents, the first response and the answer cannot come before the request was received"}
 			}
 		}
 	}
@@ -137,6 +140,7 @@ func (r *UpdateRightsRequestPrivacyDetailsRequest) normalize() *UpdateRightsRequ
 		&normalized.SupplementRequestedOn,
 		&normalized.SupplementReceivedOn,
 		&normalized.AnsweredOn,
+		&normalized.FirstRespondedOn,
 	} {
 		if *date != nil {
 			value := trainingDateOnly(**date)
@@ -239,6 +243,8 @@ func (s RightsRequestPrivacyService) UpdateDetails(
 				AnswerMethod:          req.AnswerMethod,
 				AnsweredOn:            req.AnsweredOn,
 				ApproverProfileID:     req.ApproverID,
+				FirstRespondedOn:      req.FirstRespondedOn,
+				FindingID:             req.FindingID,
 				CreatedAt:             createdAt,
 				UpdatedAt:             now,
 			}

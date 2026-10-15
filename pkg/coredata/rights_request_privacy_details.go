@@ -55,6 +55,8 @@ type (
 		AnswerMethod          *RightsRequestAnswerMethod       `db:"answer_method"`
 		AnsweredOn            *time.Time                       `db:"answered_on"`
 		ApproverProfileID     *gid.GID                         `db:"approver_profile_id"`
+		FirstRespondedOn      *time.Time                       `db:"first_responded_on"`
+		FindingID             *gid.GID                         `db:"finding_id"`
 		CreatedAt             time.Time                        `db:"created_at"`
 		UpdatedAt             time.Time                        `db:"updated_at"`
 	}
@@ -81,6 +83,8 @@ const rightsRequestPrivacyDetailsColumns = `
 	answer_method,
 	answered_on,
 	approver_profile_id,
+	first_responded_on,
+	finding_id,
 	created_at,
 	updated_at
 `
@@ -203,8 +207,8 @@ FOR UPDATE;
 
 // Upsert inserts the row or replaces its values. The receiver is synced with
 // the stored row, so CreatedAt keeps its first value. The handler and
-// approver must belong to the organization, or ErrResourceNotFound is
-// returned.
+// approver, and the finding, must belong to the organization, or
+// ErrResourceNotFound is returned.
 func (d *RightsRequestPrivacyDetails) Upsert(
 	ctx context.Context,
 	tx pg.Tx,
@@ -218,6 +222,10 @@ func (d *RightsRequestPrivacyDetails) Upsert(
 	}
 
 	if err := checkProfilesInOrganization(ctx, tx, scope, d.OrganizationID, gidStrings(profileIDs)); err != nil {
+		return err
+	}
+
+	if err := checkFindingInOrganization(ctx, tx, scope, d.OrganizationID, d.FindingID); err != nil {
 		return err
 	}
 
@@ -242,6 +250,8 @@ INSERT INTO rights_request_privacy_details (
 	answer_method,
 	answered_on,
 	approver_profile_id,
+	first_responded_on,
+	finding_id,
 	created_at,
 	updated_at
 ) VALUES (
@@ -264,6 +274,8 @@ INSERT INTO rights_request_privacy_details (
 	@answer_method,
 	@answered_on,
 	@approver_profile_id,
+	@first_responded_on,
+	@finding_id,
 	@created_at,
 	@updated_at
 )
@@ -285,6 +297,8 @@ SET
 	answer_method = EXCLUDED.answer_method,
 	answered_on = EXCLUDED.answered_on,
 	approver_profile_id = EXCLUDED.approver_profile_id,
+	first_responded_on = EXCLUDED.first_responded_on,
+	finding_id = EXCLUDED.finding_id,
 	updated_at = EXCLUDED.updated_at
 WHERE
 	rights_request_privacy_details.tenant_id = EXCLUDED.tenant_id
@@ -311,6 +325,8 @@ RETURNING
 		"answer_method":           d.AnswerMethod,
 		"answered_on":             d.AnsweredOn,
 		"approver_profile_id":     d.ApproverProfileID,
+		"first_responded_on":      d.FirstRespondedOn,
+		"finding_id":              d.FindingID,
 		"created_at":              d.CreatedAt,
 		"updated_at":              d.UpdatedAt,
 	}
@@ -330,6 +346,48 @@ RETURNING
 	}
 
 	*d = details
+
+	return nil
+}
+
+func checkFindingInOrganization(
+	ctx context.Context,
+	tx pg.Tx,
+	scope Scoper,
+	organizationID gid.GID,
+	findingID *gid.GID,
+) error {
+	if findingID == nil {
+		return nil
+	}
+
+	q := `
+SELECT
+	COUNT(*)
+FROM
+	findings
+WHERE
+	%s
+	AND organization_id = @organization_id
+	AND id = @finding_id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"organization_id": organizationID,
+		"finding_id":      *findingID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	var count int
+	if err := tx.QueryRow(ctx, q, args).Scan(&count); err != nil {
+		return fmt.Errorf("cannot count findings: %w", err)
+	}
+
+	if count != 1 {
+		return ErrResourceNotFound
+	}
 
 	return nil
 }

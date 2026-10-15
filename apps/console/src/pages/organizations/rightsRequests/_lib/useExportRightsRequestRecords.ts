@@ -22,6 +22,7 @@ import { downloadFile } from "@probo/helpers";
 import { useTranslation } from "react-i18next";
 import { graphql } from "relay-runtime";
 
+import type { useExportRightsRequestRecordsComplaintsMutation } from "#/__generated__/core/useExportRightsRequestRecordsComplaintsMutation.graphql";
 import type { useExportRightsRequestRecordsMutation } from "#/__generated__/core/useExportRightsRequestRecordsMutation.graphql";
 import { useMutation } from "#/lib/relay/useMutation";
 
@@ -35,32 +36,48 @@ const exportRightsRequestRecordsMutation = graphql`
   }
 `;
 
+const exportComplaintRecordsMutation = graphql`
+  mutation useExportRightsRequestRecordsComplaintsMutation(
+    $input: ExportRightsRequestRecordsInput!
+  ) {
+    exportComplaintRecords(input: $input) {
+      data
+    }
+  }
+`;
+
+export type RightsRequestExportKind = "all" | "complaints";
+
 // Downloads the PrivacyMark record of requests from individuals
-// (本人からの請求の記録) as an .xlsx file. Empty dates mean no bound.
-export function useExportRightsRequestRecords(organizationId: string) {
+// (本人からの請求の記録), or of complaints and consultations only
+// (苦情・相談の記録), as an .xlsx file. Empty dates mean no bound.
+export function useExportRightsRequestRecords(organizationId: string, kind: RightsRequestExportKind) {
   const { t } = useTranslation();
-  const [exportRecords, isExporting] = useMutation<useExportRightsRequestRecordsMutation>(
+  const errorToast = t(`rightsRequestRecord.export.${kind}.error`);
+  const [exportRecords, isExportingRecords] = useMutation<useExportRightsRequestRecordsMutation>(
     exportRightsRequestRecordsMutation,
-    { errorToast: t("rightsRequestRecord.errors.export") },
+    { errorToast },
+  );
+  const [exportComplaints, isExportingComplaints] = useMutation<useExportRightsRequestRecordsComplaintsMutation>(
+    exportComplaintRecordsMutation,
+    { errorToast },
   );
 
   async function download(receivedFrom: string, receivedTo: string) {
-    const response = await exportRecords({
-      variables: {
-        input: {
-          organizationId,
-          receivedFrom: receivedFrom || null,
-          receivedTo: receivedTo || null,
-        },
+    const variables = {
+      input: {
+        organizationId,
+        receivedFrom: receivedFrom || null,
+        receivedTo: receivedTo || null,
       },
-    });
+    };
+    const data = kind === "complaints"
+      ? (await exportComplaints({ variables })).exportComplaintRecords.data
+      : (await exportRecords({ variables })).exportRightsRequestRecords.data;
     // Local date, so the name matches the export date shown in the sheet.
     const today = new Date().toLocaleDateString("sv-SE");
-    downloadFile(
-      response.exportRightsRequestRecords.data,
-      `${t("rightsRequestRecord.fileName")}_${today}.xlsx`,
-    );
+    downloadFile(data, `${t(`rightsRequestRecord.export.${kind}.fileName`)}_${today}.xlsx`);
   }
 
-  return [download, isExporting] as const;
+  return [download, isExportingRecords || isExportingComplaints] as const;
 }

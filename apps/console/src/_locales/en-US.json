@@ -3715,14 +3715,14 @@
   "rightsRequestRecord": {
     "title": "Request record (PrivacyMark)",
     "description": "Record of the rights request and complaint procedure. Record the receipt, identity verification and answer, then export the request records as Excel from the list.",
-    "fileName": "request-records",
     "notChosen": "Not chosen",
     "followType": "Follow the type ({{value}})",
     "followWith": "Not chosen (exported as {{value}})",
     "sections": {
       "receipt": "Receipt",
       "verification": "Identity verification",
-      "answer": "Decision and answer"
+      "answer": "Decision and answer",
+      "complaint": "Complaint handling"
     },
     "fields": {
       "receivedOn": "Received on",
@@ -3740,7 +3740,9 @@
       "decisionReason": "Reason for not disclosing",
       "answerMethod": "Answered by",
       "answeredOn": "Answered on",
-      "approver": "Answer approved by"
+      "approver": "Answer approved by",
+      "firstRespondedOn": "First response on",
+      "finding": "Related finding"
     },
     "placeholders": {
       "verificationNote": "e.g. Copy of the driver's license"
@@ -3749,7 +3751,9 @@
       "receivedOn": "The day the request arrived. When empty, the registration date ({{date}}) is used",
       "supplement": "The wait is not counted in the handling days",
       "decisionReason": "Write the reason given to the individual, concretely",
-      "approver": "Personal information protection manager"
+      "approver": "Personal information protection manager",
+      "firstRespondedOn": "Respond first within the business days set in the procedure",
+      "finding": "When the cause lies in our own handling, register a finding and choose it."
     },
     "categories": {
       "PURPOSE_NOTIFICATION": "Notification of purpose",
@@ -3799,23 +3803,35 @@
       "sameApprover": "The handler and the approver are the same person. The personal information protection manager approves."
     },
     "export": {
-      "title": "Export records",
-      "description": "Export the request records received in the period, with a summary per kind, as Excel. Leave a date empty for no bound. For the management review, choose the fiscal year.",
       "from": "Received from",
       "to": "Received to",
-      "invalidPeriod": "The end date must be after the start date."
+      "invalidPeriod": "The end date must be after the start date.",
+      "all": {
+        "title": "Export request records",
+        "description": "Export the request records received in the period, with a summary per kind, as Excel. Leave a date empty for no bound. For the management review, choose the fiscal year.",
+        "action": "Export records (Excel)",
+        "fileName": "request-records",
+        "error": "Could not export the records"
+      },
+      "complaints": {
+        "title": "Export complaint records",
+        "description": "Export only complaints and consultations received in the period, with the counts per department, as Excel. Leave a date empty for no bound.",
+        "action": "Export complaints (Excel)",
+        "fileName": "complaint-records",
+        "error": "Could not export the complaint records"
+      }
     },
     "actions": {
       "save": "Save record",
-      "saving": "Saving...",
-      "export": "Export records (Excel)"
+      "saving": "Saving..."
     },
     "messages": {
       "saved": "Record saved"
     },
     "errors": {
-      "save": "Could not save the record",
-      "export": "Could not export the records"
-    }
+      "save": "Could not save the record"
+    },
+    "noFinding": "None",
+    "openFinding": "Open the finding"
   }
 }

@@ -22,6 +22,7 @@ import { Button, Card, Checkbox, Field, Input, Option, Select, Textarea } from "
 import { type Control, Controller, type FieldPath, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment, useLazyLoadQuery } from "react-relay";
+import { Link } from "react-router";
 
 import type {
   RightsRequestAnswerMethod,
@@ -38,10 +39,27 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { useUpdateRightsRequestPrivacyDetails } from "../_lib/useUpdateRightsRequestPrivacyDetails";
 
 const rightsRequestRecordCardQuery = graphql`
-  query RightsRequestRecordCardQuery($rightsRequestId: ID!) {
+  query RightsRequestRecordCardQuery(
+    $rightsRequestId: ID!
+    $withFindings: Boolean!
+  ) {
     node(id: $rightsRequestId) {
       ... on RightsRequest {
         ...RightsRequestRecordCardFragment
+        organization @include(if: $withFindings) {
+          findings(
+            first: 200
+            orderBy: { field: REFERENCE_ID, direction: ASC }
+          ) {
+            edges {
+              node {
+                id
+                referenceId
+                description
+              }
+            }
+          }
+        }
       }
     }
   }
@@ -74,6 +92,11 @@ const rightsRequestRecordCardFragment = graphql`
       answeredOn
       approver {
         id
+      }
+      firstRespondedOn
+      finding {
+        id
+        referenceId
       }
       handlingDays
     }
@@ -116,15 +139,22 @@ type FormValues = {
   answerMethod: string;
   answeredOn: string;
   approverId: string | null;
+  firstRespondedOn: string;
+  findingId: string;
 };
+
+type FindingOption = { id: string; label: string };
 
 // The record needs the member list (handler and approver), so the request
 // page renders this only for callers who may list members, and it loads its
-// own data.
-export function RightsRequestRecordSection({ rightsRequestId }: { rightsRequestId: string }) {
+// own data. The findings to link are loaded only for callers who may list
+// them.
+export function RightsRequestRecordSection(
+  { rightsRequestId, canListFindings }: { rightsRequestId: string; canListFindings: boolean },
+) {
   const data = useLazyLoadQuery<RightsRequestRecordCardQuery>(
     rightsRequestRecordCardQuery,
-    { rightsRequestId },
+    { rightsRequestId, withFindings: canListFindings },
     // No background refetch, which would reset a form being edited.
     { fetchPolicy: "store-or-network" },
   );
@@ -133,10 +163,21 @@ export function RightsRequestRecordSection({ rightsRequestId }: { rightsRequestI
     return null;
   }
 
-  return <RightsRequestRecordCard requestKey={data.node} />;
+  const findings = data.node.organization?.findings?.edges.map(e => ({
+    id: e.node.id,
+    label: e.node.description ? `${e.node.referenceId} ${e.node.description}` : e.node.referenceId,
+  }));
+
+  return <RightsRequestRecordCard requestKey={data.node} findings={findings ?? null} />;
 }
 
-function RightsRequestRecordCard({ requestKey }: { requestKey: RightsRequestRecordCardFragment$key }) {
+type RightsRequestRecordCardProps = {
+  requestKey: RightsRequestRecordCardFragment$key;
+  // null when the caller may not list findings.
+  findings: FindingOption[] | null;
+};
+
+function RightsRequestRecordCard({ requestKey, findings }: RightsRequestRecordCardProps) {
   const request = useFragment(rightsRequestRecordCardFragment, requestKey);
   const { t } = useTranslation();
   const d = request.privacyDetails;
@@ -158,7 +199,15 @@ function RightsRequestRecordCard({ requestKey }: { requestKey: RightsRequestReco
     answerMethod: d.answerMethod ?? none,
     answeredOn: d.answeredOn ?? "",
     approverId: d.approver?.id ?? null,
+    firstRespondedOn: d.firstRespondedOn ?? "",
+    findingId: d.finding?.id ?? none,
   };
+
+  // Keep the linked finding selectable even when it is not in the loaded
+  // page of findings.
+  const findingOptions = findings && d.finding && !findings.some(f => f.id === d.finding?.id)
+    ? [{ id: d.finding.id, label: d.finding.referenceId }, ...findings]
+    : findings;
 
   return (
     <Card padded>
@@ -180,6 +229,8 @@ function RightsRequestRecordCard({ requestKey }: { requestKey: RightsRequestReco
             receiptChannel: d.effectiveReceiptChannel ?? null,
           }}
           handlingDays={d.handlingDays ?? null}
+          findings={findingOptions}
+          linkedFindingReference={d.finding?.referenceId ?? null}
         />
       </div>
     </Card>
@@ -200,6 +251,8 @@ interface RightsRequestRecordFormProps {
     receiptChannel: RightsRequestReceiptChannel | null;
   };
   handlingDays: number | null;
+  findings: FindingOption[] | null;
+  linkedFindingReference: string | null;
 }
 
 function RightsRequestRecordForm({
@@ -208,6 +261,8 @@ function RightsRequestRecordForm({
   stored,
   effective,
   handlingDays,
+  findings,
+  linkedFindingReference,
 }: RightsRequestRecordFormProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
@@ -237,6 +292,9 @@ function RightsRequestRecordForm({
           answerMethod: orNull<RightsRequestAnswerMethod>(v.answerMethod),
           answeredOn: v.answeredOn || null,
           approverId: v.approverId,
+          firstRespondedOn: v.firstRespondedOn || null,
+          // Without the finding list the link cannot be changed, so keep it.
+          findingId: findings ? orNull<string>(v.findingId) : orNull<string>(stored.findingId),
         },
       },
     }).catch(() => {
@@ -364,6 +422,15 @@ function RightsRequestRecordForm({
         <RecordHints control={control} effectiveReceivedOn={effective.receivedOn} handlingDays={handlingDays} />
       </section>
 
+      <ComplaintSection
+        control={control}
+        register={register}
+        disabled={disabled}
+        effectiveCategory={effective.category}
+        findings={findings}
+        linkedFindingReference={linkedFindingReference}
+      />
+
       {canUpdate && (
         <div className="flex justify-end">
           <Button type="submit" variant="primary" disabled={isSaving}>
@@ -486,5 +553,76 @@ function RecordHints({ control, effectiveReceivedOn, handlingDays }: RecordHints
         </div>
       )}
     </div>
+  );
+}
+
+type ComplaintSectionProps = DecisionReasonFieldProps & {
+  effectiveCategory: RightsRequestPrivacyCategory;
+  findings: FindingOption[] | null;
+  linkedFindingReference: string | null;
+};
+
+// The first response and the finding opened for a cause in the company's
+// own handling (procedure 14, sections 7 and 12). Shown for complaints and
+// consultations only.
+function ComplaintSection(props: ComplaintSectionProps) {
+  const { control, register, disabled, effectiveCategory, findings, linkedFindingReference } = props;
+  const { t } = useTranslation();
+  const organizationId = useOrganizationId();
+  const [category, findingId] = useWatch({ control, name: ["category", "findingId"] });
+
+  const current = category === none ? effectiveCategory : category;
+  if (current !== "COMPLAINT" && current !== "CONSULTATION") {
+    return null;
+  }
+
+  return (
+    <section className="space-y-4">
+      <h3 className="text-sm font-medium text-txt-primary">{t("rightsRequestRecord.sections.complaint")}</h3>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Field
+          name="rr-firstRespondedOn"
+          label={t("rightsRequestRecord.fields.firstRespondedOn")}
+          help={t("rightsRequestRecord.help.firstRespondedOn")}
+        >
+          <Input id="rr-firstRespondedOn" {...register("firstRespondedOn")} type="date" disabled={disabled} />
+        </Field>
+        <div className="md:col-span-2">
+          {findings
+            ? (
+                <EnumSelect
+                  control={control}
+                  name="findingId"
+                  label={t("rightsRequestRecord.fields.finding")}
+                  values={findings.map(f => f.id)}
+                  labelOf={id => findings.find(f => f.id === id)?.label ?? id}
+                  noneLabel={t("rightsRequestRecord.noFinding")}
+                  disabled={disabled}
+                />
+              )
+            : (
+                <Field label={t("rightsRequestRecord.fields.finding")}>
+                  <p className="text-sm text-txt-secondary">
+                    {linkedFindingReference ?? t("rightsRequestRecord.noFinding")}
+                  </p>
+                </Field>
+              )}
+          <p className="mt-1 text-xs text-txt-tertiary">
+            {t("rightsRequestRecord.help.finding")}
+            {findingId && findingId !== none && (
+              <>
+                {" "}
+                <Link
+                  to={`/organizations/${organizationId}/governance/findings/${findingId}`}
+                  className="underline"
+                >
+                  {t("rightsRequestRecord.openFinding")}
+                </Link>
+              </>
+            )}
+          </p>
+        </div>
+      </div>
+    </section>
   );
 }

@@ -140,21 +140,28 @@ export default function RightsRequestsPage({
         title={t("rightsRequestsPage.title")}
         description={t("rightsRequestsPage.description")}
       >
-        <ExportRightsRequestRecordsDialog organizationId={organizationId}>
-          <Button variant="secondary" icon={IconArrowDown}>
-            {t("rightsRequestRecord.actions.export")}
-          </Button>
-        </ExportRightsRequestRecordsDialog>
-        {organization.node.canCreateRightsRequest && (
-          <CreateRightsRequestDialog
-            organizationId={organizationId}
-            connectionId={connectionId}
-          >
-            <Button icon={IconPlusLarge}>
-              {t("rightsRequestsPage.actions.add")}
+        <div className="flex gap-2">
+          <ExportRightsRequestRecordsDialog organizationId={organizationId} kind="all">
+            <Button variant="secondary" icon={IconArrowDown}>
+              {t("rightsRequestRecord.export.all.action")}
             </Button>
-          </CreateRightsRequestDialog>
-        )}
+          </ExportRightsRequestRecordsDialog>
+          <ExportRightsRequestRecordsDialog organizationId={organizationId} kind="complaints">
+            <Button variant="secondary" icon={IconArrowDown}>
+              {t("rightsRequestRecord.export.complaints.action")}
+            </Button>
+          </ExportRightsRequestRecordsDialog>
+          {organization.node.canCreateRightsRequest && (
+            <CreateRightsRequestDialog
+              organizationId={organizationId}
+              connectionId={connectionId}
+            >
+              <Button icon={IconPlusLarge}>
+                {t("rightsRequestsPage.actions.add")}
+              </Button>
+            </CreateRightsRequestDialog>
+          )}
+        </div>
       </PageHeader>
 
       {requests.length > 0

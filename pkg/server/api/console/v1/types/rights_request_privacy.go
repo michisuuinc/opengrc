@@ -33,6 +33,7 @@ type RightsRequestPrivacyDetails struct {
 	RightsRequestID         gid.GID                                   `json:"-"`
 	HandlerID               *gid.GID                                  `json:"-"`
 	ApproverID              *gid.GID                                  `json:"-"`
+	FindingID               *gid.GID                                  `json:"-"`
 	Category                *coredata.RightsRequestPrivacyCategory    `json:"category,omitempty"`
 	EffectiveCategory       coredata.RightsRequestPrivacyCategory     `json:"effectiveCategory"`
 	ReceivedOn              *string                                   `json:"receivedOn,omitempty"`
@@ -52,6 +53,8 @@ type RightsRequestPrivacyDetails struct {
 	AnswerMethod            *coredata.RightsRequestAnswerMethod       `json:"answerMethod,omitempty"`
 	AnsweredOn              *string                                   `json:"answeredOn,omitempty"`
 	Approver                *Profile                                  `json:"approver,omitempty"`
+	FirstRespondedOn        *string                                   `json:"firstRespondedOn,omitempty"`
+	Finding                 *Finding                                  `json:"finding,omitempty"`
 	HandlingDays            *int                                      `json:"handlingDays,omitempty"`
 	UpdatedAt               *time.Time                                `json:"updatedAt,omitempty"`
 }
