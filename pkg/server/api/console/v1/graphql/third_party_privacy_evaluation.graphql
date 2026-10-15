@@ -1,0 +1,158 @@
+# Copyright (c) 2026 MICHISUU Inc.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+# Japanese PrivacyMark outsourcing evaluation (委託先評価表): the evaluation
+# checklist of a third-party risk assessment, and the Excel export of every
+# third party's latest evaluation. Dates without a time (evaluatedOn,
+# approvedOn) are "YYYY-MM-DD" strings.
+
+enum ThirdPartyEvaluationKind
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.ThirdPartyEvaluationKind") {
+    NEW
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyEvaluationKindNew")
+    PERIODIC
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyEvaluationKindPeriodic")
+    AD_HOC
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyEvaluationKindAdHoc")
+}
+
+enum ThirdPartyEvaluationJudgement
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.ThirdPartyEvaluationJudgement") {
+    APPROVED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyEvaluationJudgementApproved")
+    CONDITIONALLY_APPROVED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyEvaluationJudgementConditionallyApproved")
+    REJECTED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyEvaluationJudgementRejected")
+}
+
+enum ThirdPartyEvaluationResult
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.ThirdPartyEvaluationResult") {
+    SUITABLE
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyEvaluationResultSuitable")
+    UNSUITABLE
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyEvaluationResultUnsuitable")
+    NOT_APPLICABLE
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyEvaluationResultNotApplicable")
+}
+
+# The checklist items, in the checklist order.
+enum ThirdPartyEvaluationItem
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.ThirdPartyEvaluationItem") {
+    CERTIFICATION
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyEvaluationItemCertification")
+    MANAGEMENT_STRUCTURE
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyEvaluationItemManagementStructure")
+    RULES
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyEvaluationItemRules")
+    EMPLOYEE_TRAINING
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyEvaluationItemEmployeeTraining")
+    PHYSICAL_SECURITY
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyEvaluationItemPhysicalSecurity")
+    ACCESS_CONTROL
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyEvaluationItemAccessControl")
+    TECHNICAL_SECURITY
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyEvaluationItemTechnicalSecurity")
+    SUBCONTRACTING
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyEvaluationItemSubcontracting")
+    INCIDENT_RESPONSE
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyEvaluationItemIncidentResponse")
+    PAST_INCIDENTS
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyEvaluationItemPastIncidents")
+    RETURN_AND_DELETION
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyEvaluationItemReturnAndDeletion")
+    FOREIGN_STORAGE
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyEvaluationItemForeignStorage")
+    CONTRACT
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.ThirdPartyEvaluationItemContract")
+}
+
+type ThirdPartyPrivacyEvaluation
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ThirdPartyPrivacyEvaluation"
+    ) {
+    kind: ThirdPartyEvaluationKind
+    adHocReason: String!
+    entrustedWork: String!
+    personalData: String!
+    storageCountries: String!
+    evaluator: Profile @goField(forceResolver: true)
+    evaluatedOn: String
+    # Every checklist item, in the checklist order.
+    answers: [ThirdPartyEvaluationAnswer!]!
+    judgement: ThirdPartyEvaluationJudgement
+    conditions: String!
+    approver: Profile @goField(forceResolver: true)
+    approvedOn: String
+    updatedAt: Datetime
+}
+
+type ThirdPartyEvaluationAnswer {
+    item: ThirdPartyEvaluationItem!
+    # Null when the item was not evaluated yet.
+    result: ThirdPartyEvaluationResult
+    note: String!
+}
+
+extend type Mutation {
+    updateThirdPartyPrivacyEvaluation(
+        input: UpdateThirdPartyPrivacyEvaluationInput!
+    ): UpdateThirdPartyPrivacyEvaluationPayload!
+    exportThirdPartyEvaluationSheet(
+        input: ExportThirdPartyEvaluationSheetInput!
+    ): ExportThirdPartyEvaluationSheetPayload!
+}
+
+# Replaces the whole evaluation of the risk assessment. Items left out of
+# answers are not evaluated.
+input UpdateThirdPartyPrivacyEvaluationInput {
+    riskAssessmentId: ID!
+    kind: ThirdPartyEvaluationKind
+    adHocReason: String!
+    entrustedWork: String!
+    personalData: String!
+    storageCountries: String!
+    evaluatorId: ID
+    evaluatedOn: String
+    answers: [ThirdPartyEvaluationAnswerInput!]!
+    judgement: ThirdPartyEvaluationJudgement
+    conditions: String!
+    approverId: ID
+    approvedOn: String
+}
+
+input ThirdPartyEvaluationAnswerInput {
+    item: ThirdPartyEvaluationItem!
+    result: ThirdPartyEvaluationResult
+    note: String!
+}
+
+type UpdateThirdPartyPrivacyEvaluationPayload {
+    thirdPartyRiskAssessment: ThirdPartyRiskAssessment!
+}
+
+input ExportThirdPartyEvaluationSheetInput {
+    organizationId: ID!
+}
+
+type ExportThirdPartyEvaluationSheetPayload {
+    # The .xlsx workbook as a data URL.
+    data: String!
+}

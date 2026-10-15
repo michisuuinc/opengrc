@@ -1279,6 +1279,22 @@ func (r *thirdPartyRiskAssessmentResolver) ThirdParty(ctx context.Context, obj *
 	return types.NewThirdParty(thirdParty), nil
 }
 
+// PrivacyEvaluation is the resolver for the privacyEvaluation field.
+func (r *thirdPartyRiskAssessmentResolver) PrivacyEvaluation(ctx context.Context, obj *types.ThirdPartyRiskAssessment) (*types.ThirdPartyPrivacyEvaluation, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionThirdPartyRiskAssessmentList)
+	if err != nil {
+		return nil, err
+	}
+
+	evaluation, err := r.probo.ThirdPartyPrivacyEvaluations.Get(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get third party privacy evaluation", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return newThirdPartyPrivacyEvaluation(evaluation), nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *thirdPartyRiskAssessmentResolver) Permission(ctx context.Context, obj *types.ThirdPartyRiskAssessment, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
