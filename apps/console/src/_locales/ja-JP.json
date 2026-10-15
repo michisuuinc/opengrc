@@ -4617,6 +4617,7 @@
     "notAttendedValue": "未受講 {{count}} 人",
     "testRequiredValue": "あり（合格点：{{passScore}}）",
     "timeZoneNote": "署名は、実施期間内（タイムゾーン：{{timeZone}}）にされたものだけを受講として数えます。",
+    "deleteBlocked": "受講記録を残すため、受講記録がある教育は削除できません。",
     "deleteConfirm": "教育「{{name}}」と受講記録を削除しますか？",
     "fields": {
       "name": "教育の名前",
@@ -4689,6 +4690,7 @@
       "removeConfirm": "{{name}} さんを受講者から外しますか？",
       "attendedValue": "{{date}}（{{source}}）",
       "signaturesValue": "{{signed}} / {{total}}",
+      "recordsKept": "受講記録を残すため、受講済みまたはテストの結果がある受講者は外せません。",
       "signedOutsidePeriod": "期間外に署名済みの教材が {{count}} 件あります。教材の新しい版を公開すると、もう一度署名を依頼できます。",
       "fields": {
         "fullName": "氏名",

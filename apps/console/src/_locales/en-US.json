@@ -2505,6 +2505,7 @@
     "notAttendedValue": "{{count}} not attended",
     "testRequiredValue": "Yes (pass score: {{passScore}})",
     "timeZoneNote": "Signatures count when they are made within the period, in the {{timeZone}} time zone.",
+    "deleteBlocked": "A training with participant records cannot be deleted, so that the training records are kept.",
     "deleteConfirm": "Delete the training plan \"{{name}}\" and its participant records?",
     "fields": {
       "name": "Name",
@@ -2577,6 +2578,7 @@
       "removeConfirm": "Remove {{name}} from this training?",
       "attendedValue": "{{date}} ({{source}})",
       "signaturesValue": "{{signed}} / {{total}}",
+      "recordsKept": "Participants who attended or have a test result cannot be removed, so that the training records are kept.",
       "signedOutsidePeriod": "{{count}} signed before the period. Publish a new version of the material to have it signed again.",
       "fields": {
         "fullName": "Name",

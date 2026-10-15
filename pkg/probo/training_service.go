@@ -68,6 +68,11 @@ type (
 
 	ErrTrainingAttendedInFuture struct{}
 
+	// ErrTrainingHasRecords keeps the training records required by the
+	// PrivacyMark: a participant with a record cannot be removed, and a plan
+	// with such participants cannot be deleted.
+	ErrTrainingHasRecords struct{}
+
 	ErrTrainingMaterialNotPublished struct {
 		Title string
 	}
@@ -84,6 +89,7 @@ type (
 		Total       int
 		Completed   int
 		NotAttended int
+		Recorded    int
 	}
 )
 
@@ -101,6 +107,10 @@ func (e *ErrTrainingInvalidTimeZone) Error() string {
 
 func (e *ErrTrainingTooManyParticipants) Error() string {
 	return fmt.Sprintf("a training plan can have at most %d participants", trainingMaxParticipants)
+}
+
+func (e *ErrTrainingHasRecords) Error() string {
+	return "training records must be kept: a participant who attended or has a test result cannot be removed, nor their training plan deleted"
 }
 
 func (e *ErrTrainingAttendedInFuture) Error() string {
@@ -430,14 +440,28 @@ func applyTrainingPlanUpdate(plan *coredata.TrainingPlan, req UpdateTrainingPlan
 	plan.UpdatedAt = time.Now()
 }
 
+// Delete deletes a plan whose participants have no record yet.
 func (s TrainingService) Delete(
 	ctx context.Context,
 	scope coredata.Scoper,
 	trainingPlanID gid.GID,
 ) error {
-	plan := &coredata.TrainingPlan{ID: trainingPlanID}
-
 	return s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		plan := &coredata.TrainingPlan{}
+		if err := plan.LoadByID(ctx, tx, scope, trainingPlanID); err != nil {
+			return fmt.Errorf("cannot load training plan: %w", err)
+		}
+
+		participants, err := loadTrainingProgress(ctx, tx, scope, plan)
+		if err != nil {
+			return err
+		}
+		for _, p := range participants {
+			if p.HasRecord() {
+				return &ErrTrainingHasRecords{}
+			}
+		}
+
 		return plan.Delete(ctx, tx, scope)
 	})
 }
@@ -560,14 +584,34 @@ func (s TrainingService) AddParticipants(
 	return added, nil
 }
 
+// RemoveParticipant removes a participant who has no record yet, such as
+// one added by mistake.
 func (s TrainingService) RemoveParticipant(
 	ctx context.Context,
 	scope coredata.Scoper,
 	trainingParticipantID gid.GID,
 ) error {
-	participant := &coredata.TrainingParticipant{ID: trainingParticipantID}
-
 	return s.svc.pg.WithTx(ctx, func(ctx context.Context, tx pg.Tx) error {
+		participant := &coredata.TrainingParticipant{}
+		if err := participant.LoadByID(ctx, tx, scope, trainingParticipantID); err != nil {
+			return fmt.Errorf("cannot load training participant: %w", err)
+		}
+
+		plan := &coredata.TrainingPlan{}
+		if err := plan.LoadByID(ctx, tx, scope, participant.TrainingPlanID); err != nil {
+			return fmt.Errorf("cannot load training plan: %w", err)
+		}
+
+		participants, err := loadTrainingProgress(ctx, tx, scope, plan)
+		if err != nil {
+			return err
+		}
+		for _, p := range participants {
+			if p.Participant.ID == participant.ID && p.HasRecord() {
+				return &ErrTrainingHasRecords{}
+			}
+		}
+
 		return participant.Delete(ctx, tx, scope)
 	})
 }
@@ -639,6 +683,17 @@ func (s TrainingService) ListParticipants(
 	return result, nil
 }
 
+// HasRecord tells whether the participant has a training record to keep:
+// an attendance, by signature or entered by hand, or a test result.
+func (p TrainingParticipantProgress) HasRecord() bool {
+	participant := p.Participant.TrainingParticipant
+
+	return p.Progress.AttendedOn != nil ||
+		participant.AttendedOn != nil ||
+		participant.TestScore != nil ||
+		participant.TestPassed != nil
+}
+
 // Summarize counts the participants of a plan by status.
 func (s TrainingService) Summarize(
 	ctx context.Context,
@@ -652,6 +707,10 @@ func (s TrainingService) Summarize(
 
 	summary := &TrainingPlanSummary{Total: len(participants)}
 	for _, p := range participants {
+		if p.HasRecord() {
+			summary.Recorded++
+		}
+
 		switch p.Progress.Status {
 		case coredata.TrainingParticipantStatusCompleted:
 			summary.Completed++

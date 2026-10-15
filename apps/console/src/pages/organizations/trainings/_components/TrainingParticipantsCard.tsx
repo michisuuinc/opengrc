@@ -77,6 +77,7 @@ const fragment = graphql`
       testPassed
       # eslint-disable-next-line relay/unused-fields
       manualTestPassed
+      hasRecord
       note
     }
   }
@@ -112,6 +113,7 @@ export function TrainingParticipantsCard({ planKey }: { planKey: TrainingPartici
           <div>
             <h2 className="text-lg font-semibold">{t("training.participants.title")}</h2>
             <p className="text-sm text-txt-tertiary">{t("training.participants.description")}</p>
+            <p className="text-xs text-txt-tertiary">{t("training.participants.recordsKept")}</p>
           </div>
           {plan.canUpdate && (
             <div className="flex gap-2">
@@ -205,9 +207,12 @@ export function TrainingParticipantsCard({ planKey }: { planKey: TrainingPartici
                             <EditTrainingParticipantDialog participant={p} testRequired={plan.testRequired}>
                               <Button variant="secondary">{t("training.actions.edit")}</Button>
                             </EditTrainingParticipantDialog>
-                            <Button variant="quaternary" onClick={() => onRemove(p)}>
-                              {t("training.actions.remove")}
-                            </Button>
+                            {/* Records are kept for the PrivacyMark audit. */}
+                            {!p.hasRecord && (
+                              <Button variant="quaternary" onClick={() => onRemove(p)}>
+                                {t("training.actions.remove")}
+                              </Button>
+                            )}
                           </div>
                         </Td>
                       )}

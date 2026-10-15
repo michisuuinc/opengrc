@@ -53,6 +53,7 @@ const fragment = graphql`
     summary {
       totalCount
       completedCount
+      recordedCount
     }
     ...TrainingMaterialsCardFragment
     ...TrainingParticipantsCardFragment
@@ -139,7 +140,13 @@ function TrainingPlanDetails({ planKey }: { planKey: TrainingPlanDetailsPageFrag
             </TrainingPlanFormDialog>
           )}
           {plan.canDelete && (
-            <Button variant="danger" onClick={onDelete}>
+            <Button
+              variant="danger"
+              onClick={onDelete}
+              // Records are kept for the PrivacyMark audit.
+              disabled={plan.summary.recordedCount > 0}
+              title={plan.summary.recordedCount > 0 ? t("training.deleteBlocked") : undefined}
+            >
               {t("training.actions.delete")}
             </Button>
           )}

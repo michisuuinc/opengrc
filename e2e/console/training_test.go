@@ -49,7 +49,7 @@ const (
 		testRequired
 		passScore
 		materials { documentId title }
-		summary { totalCount completedCount notAttendedCount }
+		summary { totalCount completedCount notAttendedCount recordedCount }
 		participants {
 			id
 			profileId
@@ -63,6 +63,7 @@ const (
 			testScore
 			testPassed
 			manualTestPassed
+			hasRecord
 			note
 		}
 	`
@@ -174,6 +175,7 @@ type (
 		TestScore           *int    `json:"testScore"`
 		TestPassed          *bool   `json:"testPassed"`
 		ManualTestPassed    *bool   `json:"manualTestPassed"`
+		HasRecord           bool    `json:"hasRecord"`
 		Note                string  `json:"note"`
 	}
 
@@ -196,6 +198,7 @@ type (
 			TotalCount       int `json:"totalCount"`
 			CompletedCount   int `json:"completedCount"`
 			NotAttendedCount int `json:"notAttendedCount"`
+			RecordedCount    int `json:"recordedCount"`
 		} `json:"summary"`
 		Participants []trainingParticipant `json:"participants"`
 	}
@@ -629,6 +632,42 @@ func TestTraining_ManualAttendanceAndTest(t *testing.T) {
 	})
 	require.Error(t, err)
 
+	_, err = owner.Do(removeTrainingParticipantMutation, map[string]any{
+		"input": map[string]any{"trainingParticipantId": participantID},
+	})
+	require.Error(t, err, "a participant with a record cannot be removed")
+}
+
+func TestTraining_RecordsAreKept(t *testing.T) {
+	t.Parallel()
+
+	owner := testutil.NewClient(t, testutil.RoleOwner)
+	attended := testutil.NewClientInOrg(t, testutil.RoleEmployee, owner)
+	addedByMistake := testutil.NewClientInOrg(t, testutil.RoleEmployee, owner)
+	attendedProfileID := attended.GetProfileID().String()
+	mistakeProfileID := addedByMistake.GetProfileID().String()
+
+	plan := createTrainingPlan(t, owner, map[string]any{"method": "CLASSROOM"})
+	_, plan = addTrainingParticipants(t, owner, plan.ID, attendedProfileID, mistakeProfileID)
+	plan = updateTrainingParticipant(t, owner, map[string]any{
+		"trainingParticipantId": plan.participant(t, attendedProfileID).ID,
+		"attendedOn":            "2026-10-10",
+	})
+	assert.Equal(t, 1, plan.Summary.RecordedCount)
+	assert.True(t, plan.participant(t, attendedProfileID).HasRecord)
+	assert.False(t, plan.participant(t, mistakeProfileID).HasRecord)
+
+	_, err := owner.Do(removeTrainingParticipantMutation, map[string]any{
+		"input": map[string]any{"trainingParticipantId": plan.participant(t, attendedProfileID).ID},
+	})
+	require.Error(t, err, "a participant who attended cannot be removed")
+	assert.Contains(t, err.Error(), "training records must be kept")
+
+	_, err = owner.Do(deleteTrainingPlanMutation, map[string]any{
+		"input": map[string]any{"trainingPlanId": plan.ID},
+	})
+	require.Error(t, err, "a plan with records cannot be deleted")
+
 	var removed struct {
 		RemoveTrainingParticipant struct {
 			TrainingPlan trainingPlan `json:"trainingPlan"`
@@ -636,9 +675,18 @@ func TestTraining_ManualAttendanceAndTest(t *testing.T) {
 	}
 
 	owner.MustExecute(removeTrainingParticipantMutation, map[string]any{
-		"input": map[string]any{"trainingParticipantId": participantID},
+		"input": map[string]any{"trainingParticipantId": plan.participant(t, mistakeProfileID).ID},
 	}, &removed)
-	assert.Empty(t, removed.RemoveTrainingParticipant.TrainingPlan.Participants)
+	require.Len(t, removed.RemoveTrainingParticipant.TrainingPlan.Participants, 1, "a participant without a record can be removed")
+
+	// The plan with a record is still there.
+	loadTrainingPlan(t, owner, plan.ID)
+
+	unrecorded := createTrainingPlan(t, owner, nil)
+	addTrainingParticipants(t, owner, unrecorded.ID, mistakeProfileID)
+	owner.MustExecute(deleteTrainingPlanMutation, map[string]any{
+		"input": map[string]any{"trainingPlanId": unrecorded.ID},
+	}, &struct{}{})
 }
 
 func TestTraining_RequestSignaturesNeedsMaterials(t *testing.T) {

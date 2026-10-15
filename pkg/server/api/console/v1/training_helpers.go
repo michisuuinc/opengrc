@@ -42,6 +42,7 @@ func NewTrainingPlanSummary(summary *probo.TrainingPlanSummary) *types.TrainingP
 		TotalCount:       summary.Total,
 		CompletedCount:   summary.Completed,
 		NotAttendedCount: summary.NotAttended,
+		RecordedCount:    summary.Recorded,
 	}
 }
 
@@ -63,6 +64,7 @@ func NewTrainingParticipant(p probo.TrainingParticipantProgress) *types.Training
 		TestScore:                participant.TestScore,
 		TestPassed:               p.Progress.TestPassed,
 		ManualTestPassed:         participant.TestPassed,
+		HasRecord:                p.HasRecord(),
 		Note:                     participant.Note,
 	}
 }
@@ -136,6 +138,9 @@ func (r *Resolver) trainingError(ctx context.Context, err error, msg string) err
 	}
 	if errTooMany, ok := errors.AsType[*probo.ErrTrainingTooManyParticipants](err); ok {
 		return gqlutils.Conflict(ctx, errTooMany)
+	}
+	if errRecords, ok := errors.AsType[*probo.ErrTrainingHasRecords](err); ok {
+		return gqlutils.Conflict(ctx, errRecords)
 	}
 	if errFuture, ok := errors.AsType[*probo.ErrTrainingAttendedInFuture](err); ok {
 		return gqlutils.Invalid(ctx, errFuture)

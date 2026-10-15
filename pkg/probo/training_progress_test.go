@@ -272,3 +272,34 @@ func TestEvaluateTrainingProgress(t *testing.T) {
 		assert.Equal(t, coredata.TrainingParticipantStatusNotAttended, progress.Status)
 	})
 }
+
+func TestTrainingProgressHasRecord(t *testing.T) {
+	t.Parallel()
+
+	score := 70
+	passed := false
+	attendedOn := trainingDate(t, "2026-10-10")
+
+	tests := []struct {
+		name        string
+		participant coredata.TrainingParticipant
+		progress    TrainingProgress
+		want        bool
+	}{
+		{name: "nothing recorded", want: false},
+		{name: "attended by signature", progress: TrainingProgress{AttendedOn: &attendedOn}, want: true},
+		{name: "attendance entered by hand", participant: coredata.TrainingParticipant{AttendedOn: &attendedOn}, want: true},
+		{name: "test score entered", participant: coredata.TrainingParticipant{TestScore: &score}, want: true},
+		{name: "test result entered", participant: coredata.TrainingParticipant{TestPassed: &passed}, want: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, tt.want, TrainingParticipantProgress{
+				Participant: &coredata.TrainingParticipantDetail{TrainingParticipant: tt.participant},
+				Progress:    tt.progress,
+			}.HasRecord())
+		})
+	}
+}
