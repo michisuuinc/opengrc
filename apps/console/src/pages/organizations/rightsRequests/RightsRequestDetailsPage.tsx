@@ -324,7 +324,10 @@ export default function RightsRequestDetailsPage(props: Props) {
 
       {request.canViewPrivacyRecord && request.id && (
         <Suspense fallback={null}>
-          <RightsRequestRecordSection rightsRequestId={request.id} />
+          <RightsRequestRecordSection
+            rightsRequestId={request.id}
+            canListFindings={request.canListFindings ?? false}
+          />
         </Suspense>
       )}
     </div>

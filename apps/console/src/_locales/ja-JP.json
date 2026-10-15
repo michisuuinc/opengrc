@@ -7183,14 +7183,14 @@
   "rightsRequestRecord": {
     "title": "本人からの請求の記録（Pマーク）",
     "description": "『開示等の請求・苦情相談への対応手順』の記録です。受付、本人確認、回答を記録し、一覧から本人からの請求の記録を Excel で出力できます。",
-    "fileName": "本人からの請求の記録",
     "notChosen": "未選択",
     "followType": "種類に合わせる（{{value}}）",
     "followWith": "未選択（{{value}}として出力）",
     "sections": {
       "receipt": "受付",
       "verification": "本人確認",
-      "answer": "判断と回答"
+      "answer": "判断と回答",
+      "complaint": "苦情・相談の対応"
     },
     "fields": {
       "receivedOn": "受付日",
@@ -7208,7 +7208,9 @@
       "decisionReason": "不開示等の理由",
       "answerMethod": "回答方法",
       "answeredOn": "回答日",
-      "approver": "回答の承認者"
+      "approver": "回答の承認者",
+      "firstRespondedOn": "一次回答日",
+      "finding": "関連する指摘事項"
     },
     "placeholders": {
       "verificationNote": "例：運転免許証の写し（本籍地は塗りつぶし）"
@@ -7217,7 +7219,9 @@
       "receivedOn": "請求書が届いた日。空のときは登録日（{{date}}）を使います",
       "supplement": "待っている期間は対応日数に含めません",
       "decisionReason": "本人に知らせた理由を、具体的に書きます",
-      "approver": "個人情報保護管理者"
+      "approver": "個人情報保護管理者",
+      "firstRespondedOn": "手順で決めた営業日数以内に一次回答します",
+      "finding": "原因が当社の取扱いの不備にあるときは、指摘事項に登録して選びます。"
     },
     "categories": {
       "PURPOSE_NOTIFICATION": "利用目的の通知",
@@ -7267,23 +7271,35 @@
       "sameApprover": "窓口担当者と承認者が同じです。承認は個人情報保護管理者が行います。"
     },
     "export": {
-      "title": "記録の出力",
-      "description": "受付日の範囲を指定して、本人からの請求の記録と種類ごとの集計を Excel で出力します。空のときは範囲を限りません。マネジメントレビューには年度を指定します。",
       "from": "受付日（から）",
       "to": "受付日（まで）",
-      "invalidPeriod": "終わりの日は、始めの日より後にしてください。"
+      "invalidPeriod": "終わりの日は、始めの日より後にしてください。",
+      "all": {
+        "title": "本人からの請求の記録の出力",
+        "description": "受付日の範囲を指定して、本人からの請求の記録と種類ごとの集計を Excel で出力します。空のときは範囲を限りません。マネジメントレビューには年度を指定します。",
+        "action": "記録を出力（Excel）",
+        "fileName": "本人からの請求の記録",
+        "error": "記録を出力できませんでした"
+      },
+      "complaints": {
+        "title": "苦情・相談の記録の出力",
+        "description": "受付日の範囲を指定して、苦情・相談だけの記録と部門別の件数を Excel で出力します。空のときは範囲を限りません。",
+        "action": "苦情・相談を出力（Excel）",
+        "fileName": "苦情・相談の記録",
+        "error": "苦情・相談の記録を出力できませんでした"
+      }
     },
     "actions": {
       "save": "記録を保存",
-      "saving": "保存中...",
-      "export": "記録を出力（Excel）"
+      "saving": "保存中..."
     },
     "messages": {
       "saved": "記録を保存しました"
     },
     "errors": {
-      "save": "記録を保存できませんでした",
-      "export": "記録を出力できませんでした"
-    }
+      "save": "記録を保存できませんでした"
+    },
+    "noFinding": "なし",
+    "openFinding": "指摘事項を開く"
   }
 }

@@ -31,21 +31,22 @@ import {
 import { type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { useExportRightsRequestRecords } from "../_lib/useExportRightsRequestRecords";
+import { type RightsRequestExportKind, useExportRightsRequestRecords } from "../_lib/useExportRightsRequestRecords";
 
 interface Props {
   children: ReactNode;
   organizationId: string;
+  kind: RightsRequestExportKind;
 }
 
 // Asks for the receipt period, such as the fiscal year under review, and
 // downloads the record of requests received in it.
-export function ExportRightsRequestRecordsDialog({ children, organizationId }: Props) {
+export function ExportRightsRequestRecordsDialog({ children, organizationId, kind }: Props) {
   const { t } = useTranslation();
   const ref = useDialogRef();
   const [receivedFrom, setReceivedFrom] = useState("");
   const [receivedTo, setReceivedTo] = useState("");
-  const [exportRecords, isExporting] = useExportRightsRequestRecords(organizationId);
+  const [exportRecords, isExporting] = useExportRightsRequestRecords(organizationId, kind);
 
   const invalid = receivedFrom !== "" && receivedTo !== "" && receivedTo < receivedFrom;
 
@@ -61,10 +62,10 @@ export function ExportRightsRequestRecordsDialog({ children, organizationId }: P
     <Dialog
       ref={ref}
       trigger={children}
-      title={<Breadcrumb items={[t("rightsRequestsPage.title"), t("rightsRequestRecord.export.title")]} />}
+      title={<Breadcrumb items={[t("rightsRequestsPage.title"), t(`rightsRequestRecord.export.${kind}.title`)]} />}
     >
       <DialogContent padded className="space-y-4">
-        <p className="text-sm text-txt-secondary">{t("rightsRequestRecord.export.description")}</p>
+        <p className="text-sm text-txt-secondary">{t(`rightsRequestRecord.export.${kind}.description`)}</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field name="rr-export-from" label={t("rightsRequestRecord.export.from")}>
             <Input
@@ -94,7 +95,7 @@ export function ExportRightsRequestRecordsDialog({ children, organizationId }: P
           disabled={isExporting || invalid}
           onClick={() => void onExport()}
         >
-          {t("rightsRequestRecord.actions.export")}
+          {t(`rightsRequestRecord.export.${kind}.action`)}
         </Button>
       </DialogFooter>
     </Dialog>
