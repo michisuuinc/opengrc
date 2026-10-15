@@ -30,6 +30,15 @@
 // unknown references silently), and must cover every control of the
 // Japan-specific frameworks they reference.
 //
+// Translated risk templates under apps/console/public/data/risks/<locale>/
+// must keep the English item count, translate each category the same way
+// everywhere, and keep names unique within a category (the risk form looks a
+// template up by name inside the selected category).
+//
+// The console only loads translated files listed in
+// apps/console/src/lib/i18n/localizedData.ts (an unknown path is answered with
+// index.html, not a 404), so those lists must match the files on disk.
+//
 // Usage:
 //   node scripts/i18n/check-frameworks.mjs [--locale ja-JP] [--root dir]
 
@@ -41,6 +50,8 @@ export const FRAMEWORKS_DIR = "apps/console/public/data/frameworks";
 export const DEFAULT_LOCALE = "ja-JP";
 export const STANDALONE_DIR = "jp";
 export const INTERNAL_CONTROLS_DIR = "apps/console/public/data/internal-controls/jp";
+export const RISKS_DIR = "apps/console/public/data/risks";
+export const LOCALIZED_DATA_FILE = "apps/console/src/lib/i18n/localizedData.ts";
 const EVIDENCE_TYPES = new Set(["FILE", "LINK"]);
 
 const isBlank = value => typeof value !== "string" || value.trim() === "";
@@ -264,6 +275,144 @@ export function checkInternalControls({ root }) {
   });
 }
 
+export function compareRiskTemplates(source, target) {
+  if (!Array.isArray(target)) {
+    return [{ key: "risks", kind: "type", message: "risk templates must be an array" }];
+  }
+  if (target.length !== source.length) {
+    return [{ key: "risks", kind: "count", message: `expected ${source.length} templates, got ${target.length}` }];
+  }
+
+  const issues = [];
+  const forward = new Map();
+  const backward = new Map();
+  const names = new Set();
+
+  target.forEach((risk, index) => {
+    const key = `#${index}`;
+    const sourceCategory = source[index].category;
+    const category = risk?.category;
+    const expected = forward.get(sourceCategory) ?? category;
+    const origin = backward.get(category) ?? sourceCategory;
+    if (expected !== category || origin !== sourceCategory) {
+      issues.push({ key, kind: "category", message: `"${sourceCategory}" is translated inconsistently` });
+    } else {
+      forward.set(sourceCategory, category);
+      backward.set(category, sourceCategory);
+    }
+    if (isBlank(category) || isBlank(risk?.name) || isBlank(risk?.description)) {
+      issues.push({ key, kind: "empty", message: "category, name and description are required" });
+    }
+    const name = `${category}\u0000${risk?.name}`;
+    if (names.has(name)) {
+      issues.push({ key, kind: "duplicate", message: "name is duplicated within its category" });
+    }
+    names.add(name);
+  });
+
+  return issues;
+}
+
+export function checkRiskTemplates({ root, locale }) {
+  const targetPath = join(root, RISKS_DIR, locale, "risks.json");
+  if (!existsSync(targetPath)) {
+    return [];
+  }
+  let issues;
+  try {
+    issues = compareRiskTemplates(readJson(join(root, RISKS_DIR, "risks.json")), readJson(targetPath));
+  } catch (error) {
+    issues = [{ key: "", kind: "syntax", message: error.message }];
+  }
+  return [{ file: relative(root, targetPath), issues }];
+}
+
+const quoted = text => [...text.matchAll(/"([^"]+)"/g)].map(match => match[1]);
+
+function constantBody(source, name) {
+  const match = source.match(new RegExp(`const ${name}\\b[^=]*=\\s*([\\s\\S]*?);\\n`));
+  if (!match) {
+    throw new Error(`${name} not found`);
+  }
+  return match[1];
+}
+
+export function parseLocalizedData(source) {
+  const frameworks = {};
+  for (const [, locale, ids] of constantBody(source, "LOCALIZED_FRAMEWORKS").matchAll(/"([^"]+)":\s*\[([^\]]*)\]/g)) {
+    frameworks[locale] = quoted(ids);
+  }
+  const jurisdictionFiles = [...constantBody(source, "JURISDICTION_FRAMEWORKS").matchAll(/"[^"]+":\s*"([^"]+)"/g)]
+    .map(match => match[1]);
+
+  return {
+    frameworks,
+    riskLocales: quoted(constantBody(source, "LOCALIZED_RISK_TEMPLATES")),
+    jurisdictionFiles,
+  };
+}
+
+export function compareLocalizedData(lists, disk) {
+  const issues = [];
+  const locales = new Set([...Object.keys(lists.frameworks), ...Object.keys(disk.frameworks)]);
+  for (const locale of locales) {
+    const listed = lists.frameworks[locale] ?? [];
+    const files = disk.frameworks[locale] ?? [];
+    issues.push(
+      ...files.filter(id => !listed.includes(id))
+        .map(id => ({ key: `${locale}/${id}`, kind: "unlisted", message: "file exists but is not listed, so it is never loaded" })),
+      ...listed.filter(id => !files.includes(id))
+        .map(id => ({ key: `${locale}/${id}`, kind: "missing", message: "listed but the file does not exist" })),
+    );
+  }
+  issues.push(
+    ...disk.riskLocales.filter(locale => !lists.riskLocales.includes(locale))
+      .map(locale => ({ key: `risks/${locale}`, kind: "unlisted", message: "risk templates exist but are not listed" })),
+    ...lists.riskLocales.filter(locale => !disk.riskLocales.includes(locale))
+      .map(locale => ({ key: `risks/${locale}`, kind: "missing", message: "listed but risks.json does not exist" })),
+    ...lists.jurisdictionFiles.filter(file => !disk.frameworkFiles.includes(file))
+      .map(file => ({ key: file, kind: "missing", message: "listed but the file does not exist" })),
+  );
+  return issues;
+}
+
+function subdirectories(directory) {
+  if (!existsSync(directory)) {
+    return [];
+  }
+  return readdirSync(directory, { withFileTypes: true })
+    .filter(entry => entry.isDirectory())
+    .map(entry => entry.name);
+}
+
+export function checkLocalizedData({ root }) {
+  const path = join(root, LOCALIZED_DATA_FILE);
+  if (!existsSync(path)) {
+    return [];
+  }
+  let issues;
+  try {
+    const lists = parseLocalizedData(readFileSync(path, "utf8"));
+    const frameworksDir = join(root, FRAMEWORKS_DIR);
+    const frameworks = {};
+    for (const locale of subdirectories(frameworksDir).filter(name => name !== STANDALONE_DIR)) {
+      frameworks[locale] = readdirSync(join(frameworksDir, locale))
+        .filter(name => name.endsWith(".json"))
+        .map(name => name.slice(0, -".json".length));
+    }
+    const disk = {
+      frameworks,
+      riskLocales: subdirectories(join(root, RISKS_DIR))
+        .filter(locale => existsSync(join(root, RISKS_DIR, locale, "risks.json"))),
+      frameworkFiles: lists.jurisdictionFiles.filter(file => existsSync(join(frameworksDir, file))),
+    };
+    issues = compareLocalizedData(lists, disk);
+  } catch (error) {
+    issues = [{ key: "", kind: "syntax", message: error.message }];
+  }
+  return [{ file: relative(root, path), issues }];
+}
+
 function parseArguments(argv) {
   const options = { locale: DEFAULT_LOCALE, root: process.cwd() };
 
@@ -299,6 +448,8 @@ function main(argv) {
     ...checkLocale(options),
     ...checkStandalone(options),
     ...checkInternalControls(options),
+    ...checkRiskTemplates(options),
+    ...checkLocalizedData(options),
   ];
   let total = 0;
   for (const { file, issues } of results) {

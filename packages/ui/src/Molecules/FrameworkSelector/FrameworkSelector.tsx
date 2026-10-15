@@ -32,6 +32,7 @@ import { HIPAA } from "../../Atoms/Frameworks/HIPAA";
 import { ISO27001 } from "../../Atoms/Frameworks/ISO27001";
 import { ISO27701 } from "../../Atoms/Frameworks/ISO27701";
 import { ISO42001 } from "../../Atoms/Frameworks/ISO42001";
+import { JISQ15001 } from "../../Atoms/Frameworks/JISQ15001";
 import { NIS2 } from "../../Atoms/Frameworks/NIS2";
 import { PCIDSS } from "../../Atoms/Frameworks/PCIDSS";
 import { SOC2 } from "../../Atoms/Frameworks/SOC2";
@@ -117,6 +118,12 @@ const availableFrameworks = [
     name: "PCI DSS",
     logo: <PCIDSS className="size-8" />,
     description: "Payment Card Industry Data Security Standard",
+  },
+  {
+    id: "PMARK-JISQ15001-2023",
+    name: "PrivacyMark (JIS Q 15001:2023)",
+    logo: <JISQ15001 className="size-8" />,
+    description: "Personal information protection management systems (Japan)",
   },
 ];
 

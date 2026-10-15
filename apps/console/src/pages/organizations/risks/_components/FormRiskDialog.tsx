@@ -52,6 +52,7 @@ import {
 } from "#/hooks/forms/useRiskForm";
 import { useFetchQuery } from "#/hooks/useFetchQuery";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
+import { riskTemplatesPath } from "#/lib/i18n/localizedData";
 import { useMutation } from "#/lib/relay/useMutation";
 
 interface FormRiskDialogProps {
@@ -377,9 +378,9 @@ function TemplateSelector({
   control: RiskForm["control"];
   watch: RiskForm["watch"];
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { data: risks } = useFetchQuery<RiskTemplate[]>(
-    "/data/risks/risks.json",
+    riskTemplatesPath(i18n.language),
     {
       staleTime: 100_000,
     },
