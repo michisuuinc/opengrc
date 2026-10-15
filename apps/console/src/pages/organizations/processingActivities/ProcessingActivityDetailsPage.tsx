@@ -77,6 +77,8 @@ import {
   useUpdateTransferImpactAssessment,
 } from "../../../hooks/graph/ProcessingActivityGraph";
 
+import { ProcessingActivityLedgerCard } from "./_components/ProcessingActivityLedgerCard";
+
 type Props = {
   queryRef: PreloadedQuery<ProcessingActivityGraphNodeQuery>;
 };
@@ -782,6 +784,10 @@ export default function ProcessingActivityDetailsPage(props: Props) {
             </form>
           </div>
         </Card>
+      )}
+
+      {activeTab === "overview" && (
+        <ProcessingActivityLedgerCard processingActivityKey={activity} />
       )}
 
       {activeTab === "dpia" && (

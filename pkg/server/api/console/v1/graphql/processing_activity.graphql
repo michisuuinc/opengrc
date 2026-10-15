@@ -171,6 +171,8 @@ type ProcessingActivity implements Node {
         @goField(forceResolver: true)
     transferImpactAssessment: TransferImpactAssessment
         @goField(forceResolver: true)
+    ledgerDetails: ProcessingActivityLedgerDetails!
+        @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
 

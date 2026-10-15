@@ -22,6 +22,7 @@ import { usePageTitle } from "@probo/hooks";
 import {
   Button,
   Card,
+  IconArrowDown,
   IconPageTextLine,
   IconPlusLarge,
   IconUpload,
@@ -51,6 +52,7 @@ import {
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 
 import { ProcessingActivityListItem } from "./_components/ProcessingActivityListItem";
+import { useExportProcessingActivityLedger } from "./_lib/useExportProcessingActivityLedger";
 import { CreateProcessingActivityDialog } from "./dialogs/CreateProcessingActivityDialog";
 import { PublishProcessingActivityListDialog } from "./dialogs/PublishProcessingActivityListDialog";
 
@@ -85,6 +87,8 @@ export default function ProcessingActivitiesPage({
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
+  const [exportLedger, isExportingLedger]
+    = useExportProcessingActivityLedger(organizationId);
 
   usePageTitle(t("processingActivitiesPage.title"));
 
@@ -147,6 +151,17 @@ export default function ProcessingActivitiesPage({
       </PageHeader>
 
       <div className="flex justify-end gap-2">
+        <Button
+          variant="secondary"
+          icon={IconArrowDown}
+          disabled={isExportingLedger}
+          onClick={() => {
+            // useMutation already shows the error toast.
+            void exportLedger().catch(() => {});
+          }}
+        >
+          {t("processingActivityLedger.actions.export")}
+        </Button>
         {paDocument?.id && (
           <Button variant="secondary" asChild>
             <Link

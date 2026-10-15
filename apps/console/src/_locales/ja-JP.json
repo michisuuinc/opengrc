@@ -4541,6 +4541,39 @@
       "deleteTia": "移転影響評価を削除"
     }
   },
+  "processingActivityLedger": {
+    "title": "個人情報管理台帳の項目",
+    "description": "上の項目にない、個人情報管理台帳の記載項目です。Excel で出力する台帳に含まれます。",
+    "fileName": "個人情報管理台帳",
+    "fields": {
+      "department": "担当部門",
+      "approximateRecordCount": "おおよその件数",
+      "collectionMethod": "取得の方法",
+      "storageLocation": "保管の場所と媒体",
+      "accessScope": "アクセスできる人の範囲",
+      "disposalMethod": "廃棄の方法"
+    },
+    "placeholders": {
+      "department": "例：人事部",
+      "approximateRecordCount": "例：年間約 300 件",
+      "collectionMethod": "例：本人から Web フォームで直接取得",
+      "storageLocation": "例：採用管理システム、書庫A（施錠）",
+      "accessScope": "例：人事部の採用担当者",
+      "disposalMethod": "例：システムから削除。紙はシュレッダーで裁断"
+    },
+    "actions": {
+      "save": "台帳の項目を保存",
+      "saving": "保存中...",
+      "export": "台帳を出力（Excel）"
+    },
+    "messages": {
+      "saved": "台帳の項目を保存しました"
+    },
+    "errors": {
+      "save": "台帳の項目を保存できませんでした",
+      "export": "台帳を出力できませんでした"
+    }
+  },
   "createProcessingActivityDialog": {
     "breadcrumb": {
       "activities": "処理活動",
