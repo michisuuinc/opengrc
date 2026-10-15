@@ -28,6 +28,7 @@ import { graphql } from "relay-runtime";
 import type { WorkspaceSettingsPageQuery } from "#/__generated__/iam/WorkspaceSettingsPageQuery.graphql";
 import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { OrganizationEmailLanguageSection } from "#/pages/organizations/settings/_components/OrganizationEmailLanguageSection";
+import { CoreRelayProvider } from "#/providers/CoreRelayProvider";
 
 import { WorkspaceDangerZoneSection } from "./_components/WorkspaceDangerZoneSection";
 import { WorkspaceIdentitySection } from "./_components/WorkspaceIdentitySection";
@@ -75,9 +76,11 @@ export function WorkspaceSettingsPage({ queryRef }: WorkspaceSettingsPageProps) 
       </div>
       <WorkspaceIdentitySection organizationKey={organization} />
       {/* Fork: the default email language (core API). */}
-      <Suspense fallback={null}>
-        <OrganizationEmailLanguageSection organizationId={organizationId} />
-      </Suspense>
+      <CoreRelayProvider>
+        <Suspense fallback={null}>
+          <OrganizationEmailLanguageSection organizationId={organizationId} />
+        </Suspense>
+      </CoreRelayProvider>
       <WorkspaceDangerZoneSection organizationKey={organization} />
     </div>
   );
