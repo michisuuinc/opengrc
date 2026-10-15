@@ -115,6 +115,7 @@ type (
 		ProcessingActivityLedger              *ProcessingActivityLedgerService
 		RiskPrivacy                           *RiskPrivacyService
 		Trainings                             *TrainingService
+		AuditPrivacy                          *AuditPrivacyService
 		DataProtectionImpactAssessments       *DataProtectionImpactAssessmentService
 		TransferImpactAssessments             *TransferImpactAssessmentService
 		StatementsOfApplicability             *StatementOfApplicabilityService
@@ -231,6 +232,7 @@ func NewService(
 	svc.ProcessingActivityLedger = &ProcessingActivityLedgerService{svc: svc}
 	svc.RiskPrivacy = &RiskPrivacyService{svc: svc}
 	svc.Trainings = &TrainingService{svc: svc}
+	svc.AuditPrivacy = &AuditPrivacyService{svc: svc}
 	svc.DataProtectionImpactAssessments = &DataProtectionImpactAssessmentService{svc: svc}
 	svc.TransferImpactAssessments = &TransferImpactAssessmentService{svc: svc}
 	svc.StatementsOfApplicability = &StatementOfApplicabilityService{svc: svc}

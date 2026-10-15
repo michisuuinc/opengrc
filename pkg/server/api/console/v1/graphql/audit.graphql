@@ -192,6 +192,12 @@ type Audit implements Node {
         filter: FindingFilter
     ): FindingConnection @goField(forceResolver: true)
 
+    # Fork: Japanese PrivacyMark internal audit report (audit_privacy.graphql).
+    privacyDetails: AuditPrivacyDetails! @goField(forceResolver: true)
+    privacyAuditors: [Profile!]! @goField(forceResolver: true)
+    privacyIndependenceConflicts: [AuditIndependenceConflict!]!
+        @goField(forceResolver: true)
+
     createdAt: Datetime!
     updatedAt: Datetime!
 
@@ -221,6 +227,8 @@ type Finding implements Node {
     priority: FindingPriority!
     risk: Risk @goField(forceResolver: true)
     effectivenessCheck: String
+    # Fork: Japanese PrivacyMark internal audit report (audit_privacy.graphql).
+    privacyDetails: FindingPrivacyDetails! @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
     permission(action: String!): Boolean! @goField(forceResolver: true)

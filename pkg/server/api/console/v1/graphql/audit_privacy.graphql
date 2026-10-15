@@ -1,0 +1,108 @@
+# Copyright (c) 2026 MICHISUU Inc.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+# Japanese PrivacyMark internal audit report (内部監査報告書): the scope,
+# criteria, auditors, audited departments and overall opinion of an audit,
+# the category and basis of its findings, and the report's Excel export.
+
+enum FindingPrivacyCategory
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.FindingPrivacyCategory") {
+    NONCONFORMITY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.FindingPrivacyCategoryNonconformity"
+        )
+    OBSERVATION
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.FindingPrivacyCategoryObservation"
+        )
+    IMPROVEMENT_OPPORTUNITY
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.FindingPrivacyCategoryImprovementOpportunity"
+        )
+}
+
+type AuditPrivacyDetails {
+    scope: String!
+    criteria: String!
+    auditeeDepartments: [String!]!
+    externalAuditors: [String!]!
+    overallOpinion: String!
+    updatedAt: Datetime
+}
+
+# An internal auditor who belongs to one of the audited departments.
+type AuditIndependenceConflict {
+    auditor: Profile!
+    department: String!
+}
+
+type FindingPrivacyDetails {
+    # The chosen category, or null when none was chosen.
+    category: FindingPrivacyCategory
+    # The chosen category, or the one the finding kind falls into.
+    effectiveCategory: FindingPrivacyCategory
+    basis: String!
+    updatedAt: Datetime
+}
+
+extend type Mutation {
+    updateAuditPrivacyDetails(
+        input: UpdateAuditPrivacyDetailsInput!
+    ): UpdateAuditPrivacyDetailsPayload!
+    updateFindingPrivacyDetails(
+        input: UpdateFindingPrivacyDetailsInput!
+    ): UpdateFindingPrivacyDetailsPayload!
+    exportAuditReport(input: ExportAuditReportInput!): ExportAuditReportPayload!
+}
+
+# Replaces every report item and the internal auditors of the audit.
+input UpdateAuditPrivacyDetailsInput {
+    auditId: ID!
+    scope: String!
+    criteria: String!
+    auditeeDepartments: [String!]!
+    externalAuditors: [String!]!
+    overallOpinion: String!
+    auditorIds: [ID!]!
+}
+
+type UpdateAuditPrivacyDetailsPayload {
+    audit: Audit!
+}
+
+# Replaces the internal audit items of the finding.
+input UpdateFindingPrivacyDetailsInput {
+    findingId: ID!
+    category: FindingPrivacyCategory
+    basis: String!
+}
+
+type UpdateFindingPrivacyDetailsPayload {
+    finding: Finding!
+}
+
+input ExportAuditReportInput {
+    auditId: ID!
+}
+
+type ExportAuditReportPayload {
+    # The .xlsx workbook as a data URL.
+    data: String!
+}

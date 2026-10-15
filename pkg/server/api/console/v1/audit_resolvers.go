@@ -236,6 +236,67 @@ func (r *auditResolver) Findings(ctx context.Context, obj *types.Audit, first *i
 	return types.NewFindingConnection(p, r, obj.ID, filter), nil
 }
 
+// PrivacyDetails is the resolver for the privacyDetails field.
+func (r *auditResolver) PrivacyDetails(ctx context.Context, obj *types.Audit) (*types.AuditPrivacyDetails, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionAuditGet)
+	if err != nil {
+		return nil, err
+	}
+
+	details, err := r.probo.AuditPrivacy.GetDetails(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get audit privacy details", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewAuditPrivacyDetails(details), nil
+}
+
+// PrivacyAuditors is the resolver for the privacyAuditors field.
+func (r *auditResolver) PrivacyAuditors(ctx context.Context, obj *types.Audit) ([]*types.Profile, error) {
+	scope, err := r.authorizeAuditPrivacyAuditors(ctx, obj.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	auditors, err := r.probo.AuditPrivacy.ListAuditors(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list audit privacy auditors", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	result := make([]*types.Profile, len(auditors))
+	for i, a := range auditors {
+		result[i] = types.NewProfile(a)
+	}
+
+	return result, nil
+}
+
+// PrivacyIndependenceConflicts is the resolver for the privacyIndependenceConflicts field.
+func (r *auditResolver) PrivacyIndependenceConflicts(ctx context.Context, obj *types.Audit) ([]*types.AuditIndependenceConflict, error) {
+	scope, err := r.authorizeAuditPrivacyAuditors(ctx, obj.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	conflicts, err := r.probo.AuditPrivacy.IndependenceConflicts(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot check audit independence", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	result := make([]*types.AuditIndependenceConflict, len(conflicts))
+	for i, c := range conflicts {
+		result[i] = &types.AuditIndependenceConflict{
+			Auditor:    types.NewProfile(c.Auditor),
+			Department: c.Department,
+		}
+	}
+
+	return result, nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *auditResolver) Permission(ctx context.Context, obj *types.Audit, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
@@ -397,6 +458,22 @@ func (r *findingResolver) Risk(ctx context.Context, obj *types.Finding) (*types.
 	}
 
 	return types.NewRisk(risk), nil
+}
+
+// PrivacyDetails is the resolver for the privacyDetails field.
+func (r *findingResolver) PrivacyDetails(ctx context.Context, obj *types.Finding) (*types.FindingPrivacyDetails, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionFindingGet)
+	if err != nil {
+		return nil, err
+	}
+
+	details, err := r.probo.AuditPrivacy.GetFindingDetails(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get finding privacy details", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewFindingPrivacyDetails(details, obj.Kind), nil
 }
 
 // Permission is the resolver for the permission field.
