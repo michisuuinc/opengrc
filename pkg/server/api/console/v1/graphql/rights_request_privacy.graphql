@@ -1,0 +1,175 @@
+# Copyright (c) 2026 MICHISUU Inc.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+# Japanese PrivacyMark record of requests from individuals (本人からの請求の
+# 記録): the receipt, verification, decision and answer of a request, and
+# the Excel export of the records. Dates without a time are "YYYY-MM-DD"
+# strings.
+
+enum RightsRequestPrivacyCategory
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.RightsRequestPrivacyCategory") {
+    PURPOSE_NOTIFICATION
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.RightsRequestPrivacyCategoryPurposeNotification")
+    DISCLOSURE
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.RightsRequestPrivacyCategoryDisclosure")
+    CORRECTION
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.RightsRequestPrivacyCategoryCorrection")
+    SUSPENSION
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.RightsRequestPrivacyCategorySuspension")
+    THIRD_PARTY_PROVISION_STOP
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.RightsRequestPrivacyCategoryThirdPartyProvisionStop")
+    THIRD_PARTY_RECORD_DISCLOSURE
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.RightsRequestPrivacyCategoryThirdPartyRecordDisclosure")
+    COMPLAINT
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.RightsRequestPrivacyCategoryComplaint")
+    CONSULTATION
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.RightsRequestPrivacyCategoryConsultation")
+}
+
+enum RightsRequestReceiptChannel
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.RightsRequestReceiptChannel") {
+    POSTAL
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.RightsRequestReceiptChannelPostal")
+    EMAIL
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.RightsRequestReceiptChannelEmail")
+    WEB_FORM
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.RightsRequestReceiptChannelWebForm")
+    PHONE
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.RightsRequestReceiptChannelPhone")
+    IN_PERSON
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.RightsRequestReceiptChannelInPerson")
+    OTHER
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.RightsRequestReceiptChannelOther")
+}
+
+enum RightsRequestVerificationMethod
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.RightsRequestVerificationMethod") {
+    ID_DOCUMENT
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.RightsRequestVerificationMethodIDDocument")
+    ACCOUNT
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.RightsRequestVerificationMethodAccount")
+    OTHER
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.RightsRequestVerificationMethodOther")
+    NOT_REQUIRED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.RightsRequestVerificationMethodNotRequired")
+}
+
+enum RightsRequestDecision
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.RightsRequestDecision") {
+    FULFILLED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.RightsRequestDecisionFulfilled")
+    PARTIALLY_FULFILLED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.RightsRequestDecisionPartiallyFulfilled")
+    NOT_FULFILLED
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.RightsRequestDecisionNotFulfilled")
+}
+
+enum RightsRequestAnswerMethod
+    @goModel(model: "go.probo.inc/probo/pkg/coredata.RightsRequestAnswerMethod") {
+    POSTAL
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.RightsRequestAnswerMethodPostal")
+    EMAIL
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.RightsRequestAnswerMethodEmail")
+    ELECTRONIC_RECORD
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.RightsRequestAnswerMethodElectronicRecord")
+    PHONE
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.RightsRequestAnswerMethodPhone")
+    OTHER
+        @goEnum(value: "go.probo.inc/probo/pkg/coredata.RightsRequestAnswerMethodOther")
+}
+
+type RightsRequestPrivacyDetails
+    @goModel(
+        model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RightsRequestPrivacyDetails"
+    ) {
+    # The chosen category, or null when none was chosen.
+    category: RightsRequestPrivacyCategory
+    # The chosen category, or the one the request type falls into.
+    effectiveCategory: RightsRequestPrivacyCategory!
+    receivedOn: String
+    # The receipt date entered, or the day the request was registered.
+    effectiveReceivedOn: String!
+    receiptChannel: RightsRequestReceiptChannel
+    # The channel entered, or the web form for a compliance portal request.
+    effectiveReceiptChannel: RightsRequestReceiptChannel
+    byAgent: Boolean!
+    targetDepartment: String!
+    handler: Profile @goField(forceResolver: true)
+    verificationMethod: RightsRequestVerificationMethod
+    verifiedOn: String
+    verificationNote: String!
+    supplementRequestedOn: String
+    supplementReceivedOn: String
+    decision: RightsRequestDecision
+    decisionReason: String!
+    answerMethod: RightsRequestAnswerMethod
+    answeredOn: String
+    approver: Profile @goField(forceResolver: true)
+    # Days from receipt to the answer, without the wait for missing
+    # documents. Null until answered.
+    handlingDays: Int
+    updatedAt: Datetime
+}
+
+extend type Mutation {
+    updateRightsRequestPrivacyDetails(
+        input: UpdateRightsRequestPrivacyDetailsInput!
+    ): UpdateRightsRequestPrivacyDetailsPayload!
+    exportRightsRequestRecords(
+        input: ExportRightsRequestRecordsInput!
+    ): ExportRightsRequestRecordsPayload!
+}
+
+# Replaces every record item of the request.
+input UpdateRightsRequestPrivacyDetailsInput {
+    rightsRequestId: ID!
+    category: RightsRequestPrivacyCategory
+    receivedOn: String
+    receiptChannel: RightsRequestReceiptChannel
+    byAgent: Boolean!
+    targetDepartment: String!
+    handlerId: ID
+    verificationMethod: RightsRequestVerificationMethod
+    verifiedOn: String
+    verificationNote: String!
+    supplementRequestedOn: String
+    supplementReceivedOn: String
+    decision: RightsRequestDecision
+    decisionReason: String!
+    answerMethod: RightsRequestAnswerMethod
+    answeredOn: String
+    approverId: ID
+}
+
+type UpdateRightsRequestPrivacyDetailsPayload {
+    rightsRequest: RightsRequest!
+}
+
+input ExportRightsRequestRecordsInput {
+    organizationId: ID!
+    # Receipt dates to export, both included. Null means no bound.
+    receivedFrom: String
+    receivedTo: String
+}
+
+type ExportRightsRequestRecordsPayload {
+    # The .xlsx workbook as a data URL.
+    data: String!
+}

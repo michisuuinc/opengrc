@@ -131,6 +131,29 @@ func (r *rightsRequestResolver) Organization(ctx context.Context, obj *types.Rig
 	return types.NewOrganization(organization), nil
 }
 
+// PrivacyDetails is the resolver for the privacyDetails field.
+func (r *rightsRequestResolver) PrivacyDetails(ctx context.Context, obj *types.RightsRequest) (*types.RightsRequestPrivacyDetails, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionRightsRequestGet)
+	if err != nil {
+		return nil, err
+	}
+
+	// The effective values depend on the stored request, such as its
+	// type, registration time and compliance portal.
+	request, err := r.probo.RightsRequests.Get(ctx, scope, obj.ID)
+	if err != nil {
+		return nil, r.rightsRequestRecordError(ctx, err, "cannot get rights request")
+	}
+
+	details, err := r.probo.RightsRequestPrivacy.GetDetails(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get rights request privacy details", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return newRightsRequestPrivacyDetails(request, details), nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *rightsRequestResolver) Permission(ctx context.Context, obj *types.RightsRequest, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
