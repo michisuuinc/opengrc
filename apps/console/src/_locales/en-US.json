@@ -3581,5 +3581,135 @@
     "errors": {
       "save": "Could not save the category and basis"
     }
+  },
+  "thirdPartyEvaluation": {
+    "title": "Outsourcing evaluation (PrivacyMark)",
+    "description": "Items of the outsourcing evaluation checklist. Get the answers and supporting documents from the third party, then record the evaluation, overall judgement and approval. Export the outsourcing evaluation as Excel from the third-party list.",
+    "fileName": "outsourcing-evaluation",
+    "notChosen": "Not chosen",
+    "notEvaluated": "Not evaluated",
+    "sections": {
+      "outsourcing": "What is outsourced",
+      "checklist": "Checklist",
+      "judgement": "Overall judgement and approval"
+    },
+    "fields": {
+      "kind": "Evaluation type",
+      "adHocReason": "Reason for the ad hoc evaluation",
+      "entrustedWork": "Outsourced work",
+      "personalData": "Personal information handled",
+      "note": "Documents checked, notes",
+      "storageCountries": "Storage countries",
+      "evaluator": "Evaluator",
+      "evaluatedOn": "Evaluation date",
+      "judgement": "Overall judgement",
+      "conditions": "Conditions and improvements requested",
+      "approver": "Approver",
+      "approvedOn": "Approval date"
+    },
+    "placeholders": {
+      "adHocReason": "e.g. A data breach was reported",
+      "entrustedWork": "e.g. Storing customer data (cloud service)",
+      "personalData": "e.g. Names and email addresses (about 10,000). No sensitive data",
+      "note": "e.g. Copy of the certificate (valid until 2027-03-31)",
+      "storageCountries": "Storage countries (e.g. Japan, United States)"
+    },
+    "help": {
+      "checklist": "Suitable = meets the criterion, Unsuitable = does not, Not applicable = not relevant to this outsourcing. The next evaluation is due when this assessment expires.",
+      "conditions": "Required for a conditional approval (improvements and deadlines)",
+      "approver": "Personal information protection manager"
+    },
+    "kinds": {
+      "NEW": "New",
+      "PERIODIC": "Periodic",
+      "AD_HOC": "Ad hoc"
+    },
+    "results": {
+      "SUITABLE": "Suitable",
+      "UNSUITABLE": "Unsuitable",
+      "NOT_APPLICABLE": "Not applicable"
+    },
+    "judgements": {
+      "APPROVED": "Approved",
+      "CONDITIONALLY_APPROVED": "Approved with conditions",
+      "REJECTED": "Rejected"
+    },
+    "items": {
+      "CERTIFICATION": {
+        "label": "Certification",
+        "criterion": "Holds a valid PrivacyMark or ISMS (ISO 27001) certification. If not, items 2 to 11 confirm an equivalent level"
+      },
+      "MANAGEMENT_STRUCTURE": {
+        "label": "Management structure",
+        "criterion": "A manager of personal information is appointed with clear responsibilities and authority"
+      },
+      "RULES": {
+        "label": "Rules",
+        "criterion": "Rules for handling and securing personal information exist and are known to employees"
+      },
+      "EMPLOYEE_TRAINING": {
+        "label": "Employee training",
+        "criterion": "Employees are trained at least once a year and sign confidentiality pledges"
+      },
+      "PHYSICAL_SECURITY": {
+        "label": "Physical security",
+        "criterion": "Entry to areas handling personal information is controlled, documents and devices are locked away and disposed of securely"
+      },
+      "ACCESS_CONTROL": {
+        "label": "Access control",
+        "criterion": "Access to personal information is limited to those who need it, IDs are not shared and authentication is strengthened (e.g. MFA)"
+      },
+      "TECHNICAL_SECURITY": {
+        "label": "Technical security",
+        "criterion": "Malware protection, software updates, encryption in transit and at rest, logging and backups are in place"
+      },
+      "SUBCONTRACTING": {
+        "label": "Subcontracting",
+        "criterion": "Subcontracting needs our prior approval, and subcontractors bear equivalent duties under supervision"
+      },
+      "INCIDENT_RESPONSE": {
+        "label": "Incident response",
+        "criterion": "There are a structure and procedure to report a data breach to us immediately"
+      },
+      "PAST_INCIDENTS": {
+        "label": "Past incidents",
+        "criterion": "No serious data breach within the period set in the checklist, or measures to prevent recurrence are in place"
+      },
+      "RETURN_AND_DELETION": {
+        "label": "Return and deletion",
+        "criterion": "Personal information is returned or deleted at the end of the contract, and the deletion can be proven"
+      },
+      "FOREIGN_STORAGE": {
+        "label": "Storage abroad",
+        "criterion": "The countries where data is stored or processed are known. For a foreign country, we understand its personal information protection system"
+      },
+      "CONTRACT": {
+        "label": "Contract",
+        "criterion": "A contract including the personal information handling memorandum is signed (or will be)"
+      }
+    },
+    "summary": "{{unsuitable}} unsuitable, {{notEvaluated}} not evaluated. {{suggestion}}",
+    "suggestions": {
+      "approved": "Every item is suitable or not applicable, so outsourcing can be approved.",
+      "unsuitable": "Some items are unsuitable: approve with conditions if a contract or improvements can cover them, otherwise reject.",
+      "incomplete": "Evaluate the remaining items before choosing the overall judgement."
+    },
+    "warnings": {
+      "approvedWithUnsuitable": "Outsourcing cannot be approved while an item is unsuitable. Choose approved with conditions or rejected.",
+      "conditionsMissing": "Enter the conditions for a conditional approval.",
+      "sameApprover": "The evaluator and the approver are the same person. The personal information protection manager approves."
+    },
+    "actions": {
+      "save": "Save outsourcing evaluation",
+      "saving": "Saving...",
+      "export": "Export outsourcing evaluation (Excel)"
+    },
+    "messages": {
+      "saved": "Outsourcing evaluation saved"
+    },
+    "errors": {
+      "save": "Could not save the outsourcing evaluation",
+      "export": "Could not export the outsourcing evaluation"
+    }
   }
 }

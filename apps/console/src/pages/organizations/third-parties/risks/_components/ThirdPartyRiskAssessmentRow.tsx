@@ -27,11 +27,14 @@ import {
   Tr,
 } from "@probo/ui";
 import { clsx } from "clsx";
+import { Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import { graphql, useFragment } from "react-relay";
 
 import type { ThirdPartyRiskAssessmentRow_assessment$key } from "#/__generated__/core/ThirdPartyRiskAssessmentRow_assessment.graphql";
 import { consoleMarkdownImageOrigins } from "#/lib/markdownImageOrigins";
+
+import { ThirdPartyPrivacyEvaluationSection } from "./ThirdPartyPrivacyEvaluationCard";
 
 const riskAssessmentRowFragment = graphql`
   fragment ThirdPartyRiskAssessmentRow_assessment on ThirdPartyRiskAssessment {
@@ -48,6 +51,8 @@ interface ThirdPartyRiskAssessmentRowProps {
   assessmentKey: ThirdPartyRiskAssessmentRow_assessment$key;
   isExpanded: boolean;
   onClick: (id: string) => void;
+  // Fork: the outsourcing evaluation card needs the member list.
+  canViewPrivacyEvaluation?: boolean;
 }
 
 export function ThirdPartyRiskAssessmentRow(props: ThirdPartyRiskAssessmentRowProps) {
@@ -106,6 +111,13 @@ export function ThirdPartyRiskAssessmentRow(props: ThirdPartyRiskAssessmentRowPr
                   )
                 : null}
             </div>
+            {props.canViewPrivacyEvaluation && (
+              <div className="mt-4 max-w-5xl">
+                <Suspense fallback={null}>
+                  <ThirdPartyPrivacyEvaluationSection riskAssessmentId={assessment.id} />
+                </Suspense>
+              </div>
+            )}
           </Td>
         </Tr>
       )}

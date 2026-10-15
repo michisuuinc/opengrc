@@ -57,6 +57,10 @@ const riskAssessmentsFragment = graphql`
     canCreateRiskAssessment: permission(
       action: "core:thirdParty-risk-assessment:create"
     )
+    # Fork: the outsourcing evaluation card needs the member list.
+    canViewPrivacyEvaluation: permission(
+      action: "iam:membership-profile:list"
+    )
     riskAssessments(
       first: $first
       after: $after
@@ -164,6 +168,7 @@ export default function ThirdPartyRiskAssessmentPage(
                 key={assessment.id}
                 assessmentKey={assessment}
                 isExpanded={expanded === assessment.id}
+                canViewPrivacyEvaluation={data.canViewPrivacyEvaluation}
                 onClick={() =>
                   setExpanded(prev =>
                     prev === assessment.id ? null : assessment.id,

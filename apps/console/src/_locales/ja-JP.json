@@ -7049,5 +7049,135 @@
     "errors": {
       "save": "分類と根拠を保存できませんでした"
     }
+  },
+  "thirdPartyEvaluation": {
+    "title": "委託先評価（Pマーク）",
+    "description": "『委託先評価チェックリスト』の項目です。委託先から回答と裏付けの資料を受け取り、評価・総合判定・承認を記録します。取引先の一覧から委託先評価表を Excel で出力できます。",
+    "fileName": "委託先評価表",
+    "notChosen": "未選択",
+    "notEvaluated": "未評価",
+    "sections": {
+      "outsourcing": "委託の内容",
+      "checklist": "評価項目",
+      "judgement": "総合判定と承認"
+    },
+    "fields": {
+      "kind": "評価の種類",
+      "adHocReason": "臨時の評価の理由",
+      "entrustedWork": "委託する業務",
+      "personalData": "取り扱う個人情報",
+      "note": "確認した資料・備考",
+      "storageCountries": "保管する国",
+      "evaluator": "評価者",
+      "evaluatedOn": "評価日",
+      "judgement": "総合判定",
+      "conditions": "条件・改善を求める事項",
+      "approver": "承認者",
+      "approvedOn": "承認日"
+    },
+    "placeholders": {
+      "adHocReason": "例：漏えい事故の報告を受けた",
+      "entrustedWork": "例：顧客データの保管（クラウドサービス）",
+      "personalData": "例：氏名、メールアドレス（約 1 万件）。要配慮個人情報なし",
+      "note": "例：認証書の写し（有効期限 2027-03-31）",
+      "storageCountries": "保管する国（例：日本、米国）"
+    },
+    "help": {
+      "checklist": "適＝基準を満たす、否＝満たさない、該当なし＝この委託には関係しない。次回評価予定は、この評価の有効期限です。",
+      "conditions": "条件付きで委託可のときは必ず入力します（改善を求める事項と期限）",
+      "approver": "個人情報保護管理者"
+    },
+    "kinds": {
+      "NEW": "新規",
+      "PERIODIC": "定期",
+      "AD_HOC": "臨時"
+    },
+    "results": {
+      "SUITABLE": "適",
+      "UNSUITABLE": "否",
+      "NOT_APPLICABLE": "該当なし"
+    },
+    "judgements": {
+      "APPROVED": "委託可",
+      "CONDITIONALLY_APPROVED": "条件付きで委託可",
+      "REJECTED": "委託不可"
+    },
+    "items": {
+      "CERTIFICATION": {
+        "label": "認証の取得",
+        "criterion": "プライバシーマーク又は ISMS（ISO 27001）の認証を取得し、有効期限内である。取得していない場合は、2〜11 で同等の水準を確認する"
+      },
+      "MANAGEMENT_STRUCTURE": {
+        "label": "管理体制",
+        "criterion": "個人情報の管理責任者が定められ、責任と権限が明確である"
+      },
+      "RULES": {
+        "label": "規程の整備",
+        "criterion": "個人情報の取扱いと安全管理の規程があり、従業者に周知されている"
+      },
+      "EMPLOYEE_TRAINING": {
+        "label": "従業者の教育",
+        "criterion": "従業者に年 1 回以上の教育を行い、秘密保持の誓約を取っている"
+      },
+      "PHYSICAL_SECURITY": {
+        "label": "物理的安全管理",
+        "criterion": "個人情報を扱う区域の入退室管理、書類・機器の施錠保管、確実な廃棄を行っている"
+      },
+      "ACCESS_CONTROL": {
+        "label": "アクセス制御",
+        "criterion": "個人情報へのアクセスを必要な者に限り、ID を共有せず、多要素認証などで認証を強化している"
+      },
+      "TECHNICAL_SECURITY": {
+        "label": "技術的安全管理",
+        "criterion": "マルウェア対策、ソフトウェアの更新、通信と保存データの暗号化、ログの取得、バックアップを行っている"
+      },
+      "SUBCONTRACTING": {
+        "label": "再委託の管理",
+        "criterion": "再委託するときは事前に当社の承認を得る。再委託先にも同等の義務を課し、監督している"
+      },
+      "INCIDENT_RESPONSE": {
+        "label": "事故時の対応",
+        "criterion": "漏えい等の際に、当社へ直ちに報告する体制と手順がある"
+      },
+      "PAST_INCIDENTS": {
+        "label": "過去の事故",
+        "criterion": "チェックリストで定める期間内に重大な漏えい等がない。ある場合は、再発防止策が実施されている"
+      },
+      "RETURN_AND_DELETION": {
+        "label": "返却・消去",
+        "criterion": "契約終了時に個人情報を返却又は消去し、消去を証明できる"
+      },
+      "FOREIGN_STORAGE": {
+        "label": "外国でのデータの保管",
+        "criterion": "データを保管・処理する国が明らかである。外国の場合は、その国の個人情報の保護に関する制度を当社が把握している"
+      },
+      "CONTRACT": {
+        "label": "契約",
+        "criterion": "『個人情報の取扱いに関する覚書』の内容を含む契約を結んでいる（又は結ぶ予定である）"
+      }
+    },
+    "summary": "否 {{unsuitable}} 件、未評価 {{notEvaluated}} 件。{{suggestion}}",
+    "suggestions": {
+      "approved": "すべて適又は該当なしなので、委託可にできます。",
+      "unsuitable": "否があるので、契約や改善で補えるなら条件付きで委託可、補えないなら委託不可にします。",
+      "incomplete": "未評価の項目を評価してから総合判定を選びます。"
+    },
+    "warnings": {
+      "approvedWithUnsuitable": "否の項目があるときは「委託可」にできません。「条件付きで委託可」か「委託不可」を選んでください。",
+      "conditionsMissing": "条件付きで委託可のときは、条件・改善を求める事項を入力してください。",
+      "sameApprover": "評価者と承認者が同じです。承認は個人情報保護管理者が行います。"
+    },
+    "actions": {
+      "save": "委託先評価を保存",
+      "saving": "保存中...",
+      "export": "委託先評価表を出力（Excel）"
+    },
+    "messages": {
+      "saved": "委託先評価を保存しました"
+    },
+    "errors": {
+      "save": "委託先評価を保存できませんでした",
+      "export": "委託先評価表を出力できませんでした"
+    }
   }
 }
