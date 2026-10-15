@@ -43,6 +43,7 @@ import {
   useConfirm,
 } from "@probo/ui";
 import useToast from "@probo/ui/src/v2/Toaster/useToast";
+import { Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ConnectionHandler,
@@ -64,6 +65,8 @@ import {
   useUpdateAudit,
   useUploadAuditReport,
 } from "../../../hooks/graph/AuditGraph";
+
+import { AuditPrivacyReportSection } from "./_components/AuditPrivacyReportCard";
 
 const updateAuditSchema = z.object({
   name: z.string().nullable().optional(),
@@ -332,6 +335,12 @@ export default function AuditDetailsPage(props: Props) {
           </div>
         </Card>
       </div>
+
+      {auditEntry.canViewPrivacyReport && auditEntry.canListFindings && auditEntry.id && (
+        <Suspense fallback={null}>
+          <AuditPrivacyReportSection auditId={auditEntry.id} />
+        </Suspense>
+      )}
     </div>
   );
 }

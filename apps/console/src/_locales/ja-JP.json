@@ -6972,5 +6972,82 @@
     "ZA": "南アフリカ",
     "ZM": "ザンビア",
     "ZW": "ジンバブエ"
+  },
+  "auditPrivacy": {
+    "title": "内部監査報告書の項目",
+    "description": "Pマークの内部監査報告書に載せる項目です。監査の範囲・基準・監査員・被監査部門・総合的な所見を入れ、Excel で報告書を出力します。",
+    "fileName": "内部監査報告書",
+    "defaults": {
+      "criteria": "JIS Q 15001:2023、当社の規程、法令等"
+    },
+    "fields": {
+      "scope": "監査の範囲",
+      "criteria": "監査の基準",
+      "auditors": "監査員（社内）",
+      "externalAuditors": "監査員（外部）",
+      "auditeeDepartments": "被監査部門",
+      "overallOpinion": "総合的な所見"
+    },
+    "placeholders": {
+      "scope": "例：J.1〜J.11 に対応する規程と運用",
+      "auditors": "監査員を追加",
+      "auditeeDepartments": "例：営業部",
+      "overallOpinion": "PMS の適合性と有効性についての総合的な所見"
+    },
+    "help": {
+      "onePerLine": "1 行に 1 つずつ入力します"
+    },
+    "independence": {
+      "title": "監査員が自分の部門を監査しています",
+      "item": "{{name}} さんは被監査部門「{{department}}」に所属しています。別の監査員に替えてください。"
+    },
+    "findings": {
+      "title": "この監査の指摘事項",
+      "empty": "指摘事項はまだありません。",
+      "noCategory": "分類なし",
+      "major": "{{category}}（重大）",
+      "truncated": "{{total}} 件のうち {{shown}} 件を表示しています。監査報告書の Excel にはすべて出力されます。",
+      "help": "指摘事項の分類と根拠は、指摘事項の画面で入力します。"
+    },
+    "actions": {
+      "save": "報告書の項目を保存",
+      "saving": "保存中...",
+      "export": "監査報告書を出力（Excel）"
+    },
+    "messages": {
+      "saved": "報告書の項目を保存しました"
+    },
+    "errors": {
+      "save": "報告書の項目を保存できませんでした",
+      "export": "監査報告書を出力できませんでした"
+    }
+  },
+  "findingPrivacy": {
+    "title": "内部監査の分類と根拠",
+    "description": "Pマークの内部監査規程による分類（不適合・観察事項・改善の機会）と、根拠となる規程や J 番号です。内部監査報告書に載ります。",
+    "fields": {
+      "category": "分類",
+      "basis": "根拠"
+    },
+    "placeholders": {
+      "basis": "例：J.7 安全管理措置、個人情報保護規程 第 20 条"
+    },
+    "categories": {
+      "NONCONFORMITY": "不適合",
+      "OBSERVATION": "観察事項",
+      "IMPROVEMENT_OPPORTUNITY": "改善の機会"
+    },
+    "followKindWith": "種別に合わせる（{{category}}）",
+    "followKindNone": "種別に合わせる（分類なし）",
+    "actions": {
+      "save": "分類と根拠を保存",
+      "saving": "保存中..."
+    },
+    "messages": {
+      "saved": "分類と根拠を保存しました"
+    },
+    "errors": {
+      "save": "分類と根拠を保存できませんでした"
+    }
   }
 }

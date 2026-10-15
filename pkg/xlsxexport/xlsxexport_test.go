@@ -185,3 +185,46 @@ func TestBuild_InvalidSheet(t *testing.T) {
 		)
 	}
 }
+
+func TestBuildWorkbook_MultipleSheets(t *testing.T) {
+	t.Parallel()
+
+	first := validSheet()
+	second := validSheet()
+	second.Name = "一覧"
+	second.Title = "指摘事項一覧"
+	second.Rows = [][]string{{"不適合", "記録なし"}}
+
+	data, err := xlsxexport.BuildWorkbook(first, second)
+	require.NoError(t, err)
+
+	f := openWorkbook(t, data)
+	assert.Equal(t, []string{"台帳", "一覧"}, f.GetSheetList())
+	assert.Equal(t, 0, f.GetActiveSheetIndex())
+
+	rows, err := f.GetRows("一覧")
+	require.NoError(t, err)
+	require.Len(t, rows, 5)
+	assert.Equal(t, "指摘事項一覧", rows[0][0])
+	assert.Equal(t, []string{"不適合", "記録なし"}, rows[4])
+
+	panes, err := f.GetPanes("一覧")
+	require.NoError(t, err)
+	assert.True(t, panes.Freeze)
+}
+
+func TestBuildWorkbook_Invalid(t *testing.T) {
+	t.Parallel()
+
+	_, err := xlsxexport.BuildWorkbook()
+	assert.Error(t, err)
+
+	dup := validSheet()
+	_, err = xlsxexport.BuildWorkbook(validSheet(), dup)
+	assert.Error(t, err)
+
+	bad := validSheet()
+	bad.Columns = nil
+	_, err = xlsxexport.BuildWorkbook(validSheet(), bad)
+	assert.Error(t, err)
+}

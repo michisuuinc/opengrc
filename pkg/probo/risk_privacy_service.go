@@ -24,6 +24,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
 	"slices"
 	"strings"
 	"time"
@@ -70,10 +71,16 @@ func (r *UpdateRiskPrivacyDetailsRequest) Validate() error {
 	return v.Error()
 }
 
+// maxItems rejects a list with more than n items. Validator.Check passes
+// the list already dereferenced, so the value is a slice, not a pointer.
 func maxItems(n int) validator.ValidatorFunc {
 	return func(value any) *validator.ValidationError {
-		ids, ok := value.(*[]gid.GID)
-		if !ok || ids == nil || len(*ids) <= n {
+		if value == nil {
+			return nil
+		}
+
+		rv := reflect.ValueOf(value)
+		if rv.Kind() != reflect.Slice || rv.Len() <= n {
 			return nil
 		}
 

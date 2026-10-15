@@ -103,15 +103,40 @@ func (s Sheet) validate() error {
 // written as a string cell, so text that starts with "=" is never evaluated
 // as a formula.
 func Build(s Sheet) ([]byte, error) {
-	if err := s.validate(); err != nil {
-		return nil, fmt.Errorf("invalid sheet: %w", err)
+	return BuildWorkbook(s)
+}
+
+// BuildWorkbook renders the sheets, in order, into one workbook and returns
+// its bytes. The first sheet is the one shown when the file is opened.
+func BuildWorkbook(sheets ...Sheet) ([]byte, error) {
+	if len(sheets) == 0 {
+		return nil, errors.New("invalid workbook: at least one sheet is required")
+	}
+
+	names := make(map[string]struct{}, len(sheets))
+	for i, s := range sheets {
+		if err := s.validate(); err != nil {
+			return nil, fmt.Errorf("invalid sheet %d: %w", i, err)
+		}
+
+		key := strings.ToLower(s.Name)
+		if _, ok := names[key]; ok {
+			return nil, fmt.Errorf("invalid sheet %d: duplicate sheet name %q", i, s.Name)
+		}
+		names[key] = struct{}{}
 	}
 
 	f := excelize.NewFile()
 	defer func() { _ = f.Close() }()
 
-	if err := f.SetSheetName("Sheet1", s.Name); err != nil {
+	if err := f.SetSheetName("Sheet1", sheets[0].Name); err != nil {
 		return nil, fmt.Errorf("cannot name sheet: %w", err)
+	}
+
+	for _, s := range sheets[1:] {
+		if _, err := f.NewSheet(s.Name); err != nil {
+			return nil, fmt.Errorf("cannot add sheet: %w", err)
+		}
 	}
 
 	st, err := newStyles(f)
@@ -124,11 +149,15 @@ func Build(s Sheet) ([]byte, error) {
 		writeTable,
 		setLayout,
 	}
-	for _, step := range steps {
-		if err := step(f, s, st); err != nil {
-			return nil, err
+	for _, s := range sheets {
+		for _, step := range steps {
+			if err := step(f, s, st); err != nil {
+				return nil, err
+			}
 		}
 	}
+
+	f.SetActiveSheet(0)
 
 	buf, err := f.WriteToBuffer()
 	if err != nil {
