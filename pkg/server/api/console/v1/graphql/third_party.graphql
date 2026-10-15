@@ -391,6 +391,10 @@ type ThirdPartyRiskAssessment implements Node {
     dataSensitivity: DataSensitivity!
     businessImpact: BusinessImpact!
     notes: String
+    # Fork: Japanese PrivacyMark outsourcing evaluation
+    # (third_party_privacy_evaluation.graphql).
+    privacyEvaluation: ThirdPartyPrivacyEvaluation!
+        @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
 

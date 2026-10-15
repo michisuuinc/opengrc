@@ -21,6 +21,7 @@
 import { usePageTitle } from "@probo/hooks";
 import {
   Button,
+  IconArrowDown,
   IconMagnifyingGlass,
   IconPageTextLine,
   IconPlusLarge,
@@ -52,6 +53,7 @@ import { useOrganizationId } from "#/hooks/useOrganizationId";
 import { CreateThirdPartyDialog } from "./_components/CreateThirdPartyDialog";
 import { PublishThirdPartyListDialog } from "./_components/PublishThirdPartyListDialog";
 import { ThirdPartyRow } from "./_components/ThirdPartyRow";
+import { useExportThirdPartyEvaluationSheet } from "./_lib/useExportThirdPartyEvaluationSheet";
 
 export const thirdPartiesPageQuery = graphql`
   query ThirdPartiesPageQuery($organizationId: ID!) {
@@ -116,6 +118,8 @@ export default function ThirdPartiesPage(props: ThirdPartiesPageProps) {
   const { t } = useTranslation();
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
+  const [exportEvaluation, isExportingEvaluation]
+    = useExportThirdPartyEvaluationSheet(organizationId);
 
   const queryData = usePreloadedQuery<ThirdPartiesPageQuery>(thirdPartiesPageQuery, props.queryRef);
   const { data: fragmentData, ...pagination } = usePaginationFragment<
@@ -191,6 +195,17 @@ export default function ThirdPartiesPage(props: ThirdPartiesPageProps) {
               {t("thirdPartiesPage.actions.document")}
             </Button>
           )}
+          <Button
+            variant="secondary"
+            icon={IconArrowDown}
+            disabled={isExportingEvaluation}
+            onClick={() => {
+              // useMutation already shows the error toast.
+              void exportEvaluation().catch(() => {});
+            }}
+          >
+            {t("thirdPartyEvaluation.actions.export")}
+          </Button>
           {fragmentData.canPublishThirdParty && (
             <PublishThirdPartyListDialog
               organizationId={organizationId}

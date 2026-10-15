@@ -312,6 +312,16 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
 			return r.trainingParticipantNode(ctx, scope, id)
 		}
+	case coredata.ThirdPartyRiskAssessmentEntityType:
+		action = probo.ActionThirdPartyRiskAssessmentList
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			assessment, err := r.probo.ThirdParties.GetRiskAssessment(ctx, scope, id)
+			if err != nil {
+				return nil, err
+			}
+
+			return types.NewThirdPartyRiskAssessment(assessment), nil
+		}
 	case coredata.AssetEntityType:
 		action = probo.ActionAssetList
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
