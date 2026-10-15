@@ -1,0 +1,20 @@
+Probo
+
+{{.RecipientFullName}} 様
+
+所属する {{.OrganizationName}} から、確認と署名が必要な文書が共有されています。
+
+{{range .Documents}}- {{.Title}}（{{.Type}}）: {{.URL}}
+{{end}}
+社内の規程に沿って、次のリンクから文書を確認し、署名してください。
+
+{{.SigningUrl}}
+
+ご不明な点は、社内の情報セキュリティの担当者にお問い合わせください。
+
+この手続きは、{{.OrganizationName}} に代わって Probo が安全に管理しています。
+
+よろしくお願いいたします。
+
+{{.SenderCompanyHeadquarterAddress}}
+Powered By Probo

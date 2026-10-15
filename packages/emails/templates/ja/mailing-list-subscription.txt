@@ -1,0 +1,16 @@
+{{.SenderCompanyName}}
+
+{{.RecipientFullName}} 様
+
+{{.OrganizationName}} のコンプライアンスのアップデートの購読が申し込まれました。
+
+次のリンクから、購読を確定してください。
+
+{{.ConfirmURL}}
+
+お心当たりのない場合や、今後このメールが不要な場合は、次のリンクから購読を解除できます。
+
+{{.UnsubscribeURL}}
+
+{{.SenderCompanyHeadquarterAddress}}
+Powered By Probo

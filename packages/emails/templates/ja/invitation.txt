@@ -1,0 +1,12 @@
+Probo
+
+{{.RecipientFullName}} 様
+
+{{.OrganizationName}} から、Probo への招待が届いています。次のリンクからアカウントを有効にしてください。
+
+{{.InvitationUrl}}
+
+参加しない場合は、このメールを破棄してください。
+
+{{.SenderCompanyHeadquarterAddress}}
+Powered By Probo

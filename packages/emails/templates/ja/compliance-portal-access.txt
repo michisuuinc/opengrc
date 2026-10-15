@@ -1,0 +1,10 @@
+Probo
+
+{{.RecipientFullName}} 様
+
+{{.OrganizationName}} のコンプライアンスポータルへのアクセスが許可されました。次のリンクから開いてください。
+
+{{.BaseURL}}
+
+{{.SenderCompanyHeadquarterAddress}}
+Powered By Probo

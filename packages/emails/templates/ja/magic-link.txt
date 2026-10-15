@@ -1,0 +1,12 @@
+Probo
+
+{{.RecipientFullName}} 様
+
+次のリンクから、{{.OrganizationName}} のコンプライアンスポータルにログインしてください。
+
+{{.MagicLinkURL}}
+
+重要：このリンクの有効期限は {{.DurationInMinutes}} 分です。メールを受け取ったら、すぐにお使いください。
+
+{{.SenderCompanyHeadquarterAddress}}
+Powered By Probo

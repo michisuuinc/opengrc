@@ -1,0 +1,12 @@
+Probo
+
+{{.RecipientFullName}} 様
+
+フレームワークのエクスポートが完了しました。次のリンクからダウンロードしてください。
+
+{{.DownloadUrl}}
+
+このリンクの有効期限は 24 時間です。
+
+{{.SenderCompanyHeadquarterAddress}}
+Powered By Probo

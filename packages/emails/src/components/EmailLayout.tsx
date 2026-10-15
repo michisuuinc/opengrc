@@ -34,20 +34,23 @@ import { ProboLogo } from './ProboLogo';
 interface EmailLayoutProps {
   subject: string;
   children: React.ReactNode;
+  // Fork: the Japanese emails (src/ja/) pass "ja".
+  lang?: "en" | "ja";
 }
 
 export const EmailLayout = ({
   subject,
   children,
+  lang = "en",
 }: EmailLayoutProps) => {
   return (
-    <Html lang="en">
+    <Html lang={lang}>
       <Head>
         <meta name="x-apple-disable-message-reformatting" />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
         <title>{subject}</title>
       </Head>
-      <Body style={main}>
+      <Body style={lang === "ja" ? mainJapanese : main}>
         <Container style={container}>
           <Section style={content}>
             <Section style={logoSection}>
@@ -56,7 +59,9 @@ export const EmailLayout = ({
               </Link>
             </Section>
 
-            <Text style={text}>Hi {'{{.RecipientFullName}}'},</Text>
+            {lang === "ja"
+              ? <Text style={text}>{'{{.RecipientFullName}}'} 様</Text>
+              : <Text style={text}>Hi {'{{.RecipientFullName}}'},</Text>}
 
             {children}
           </Section>
@@ -87,6 +92,14 @@ const main: React.CSSProperties = {
     "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
   backgroundColor: '#fffffb',
   WebkitTextSizeAdjust: '100%',
+};
+
+// Fork: Japanese fonts first, so kana and kanji do not fall back to a
+// Chinese font.
+const mainJapanese: React.CSSProperties = {
+  ...main,
+  fontFamily:
+    "'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', Meiryo, " + main.fontFamily,
 };
 
 const container: React.CSSProperties = {

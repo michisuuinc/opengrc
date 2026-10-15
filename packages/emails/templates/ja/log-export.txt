@@ -1,0 +1,10 @@
+Probo
+
+{{.RecipientFullName}} 様
+
+{{.ExportLabel}}のエクスポートが完了しました。次のリンクからダウンロードしてください。
+
+{{.DownloadUrl}}
+
+{{.SenderCompanyHeadquarterAddress}}
+Powered By Probo
