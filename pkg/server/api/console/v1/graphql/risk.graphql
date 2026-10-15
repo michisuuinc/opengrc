@@ -130,6 +130,9 @@ type Risk implements Node {
     ): TreatmentPlanConnection! @goField(forceResolver: true)
 
     riskAnalysisHistoryCount: Int! @goField(forceResolver: true)
+    privacyDetails: RiskPrivacyDetails! @goField(forceResolver: true)
+    privacyProcessingActivities: [ProcessingActivity!]!
+        @goField(forceResolver: true)
 
     createdAt: Datetime!
     updatedAt: Datetime!

@@ -113,6 +113,7 @@ type (
 		RightsRequests                        *RightsRequestService
 		ProcessingActivities                  *ProcessingActivityService
 		ProcessingActivityLedger              *ProcessingActivityLedgerService
+		RiskPrivacy                           *RiskPrivacyService
 		DataProtectionImpactAssessments       *DataProtectionImpactAssessmentService
 		TransferImpactAssessments             *TransferImpactAssessmentService
 		StatementsOfApplicability             *StatementOfApplicabilityService
@@ -227,6 +228,7 @@ func NewService(
 	svc.RightsRequests = &RightsRequestService{svc: svc}
 	svc.ProcessingActivities = &ProcessingActivityService{svc: svc}
 	svc.ProcessingActivityLedger = &ProcessingActivityLedgerService{svc: svc}
+	svc.RiskPrivacy = &RiskPrivacyService{svc: svc}
 	svc.DataProtectionImpactAssessments = &DataProtectionImpactAssessmentService{svc: svc}
 	svc.TransferImpactAssessments = &TransferImpactAssessmentService{svc: svc}
 	svc.StatementsOfApplicability = &StatementOfApplicabilityService{svc: svc}

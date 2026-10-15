@@ -4574,6 +4574,35 @@
       "export": "台帳を出力できませんでした"
     }
   },
+  "riskPrivacy": {
+    "title": "リスク分析表の項目",
+    "description": "Pマークのリスク分析表に使う項目です。個人情報のどの段階のリスクか、どの台帳（処理活動）のリスクかを選びます。Excel で出力するリスク分析表に含まれます。",
+    "fileName": "リスク分析表",
+    "fields": {
+      "lifecycleStages": "段階",
+      "processingActivities": "対象の台帳（処理活動）"
+    },
+    "stages": {
+      "COLLECTION": "取得・入力",
+      "TRANSFER": "移送・送信",
+      "USE": "利用・加工",
+      "STORAGE": "保管・バックアップ",
+      "DISPOSAL": "消去・廃棄"
+    },
+    "emptyProcessingActivities": "処理活動がまだありません。先に処理活動を登録してください。",
+    "actions": {
+      "save": "リスク分析表の項目を保存",
+      "saving": "保存中...",
+      "export": "リスク分析表を出力（Excel）"
+    },
+    "messages": {
+      "saved": "リスク分析表の項目を保存しました"
+    },
+    "errors": {
+      "save": "リスク分析表の項目を保存できませんでした",
+      "export": "リスク分析表を出力できませんでした"
+    }
+  },
   "createProcessingActivityDialog": {
     "breadcrumb": {
       "activities": "処理活動",

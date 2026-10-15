@@ -25,6 +25,8 @@ import { graphql, type PreloadedQuery, usePreloadedQuery } from "react-relay";
 
 import type { RiskOverviewPageQuery } from "#/__generated__/core/RiskOverviewPageQuery.graphql";
 
+import { RiskPrivacyCard } from "../_components/RiskPrivacyCard";
+
 export const riskOverviewPageQuery = graphql`
   query RiskOverviewPageQuery($riskId: ID!) {
     node(id: $riskId) {
@@ -45,6 +47,7 @@ export const riskOverviewPageQuery = graphql`
             downloadUrl
           }
         }
+        ...RiskPrivacyCardFragment
       }
     }
   }
@@ -175,6 +178,7 @@ export default function RiskOverviewPage({ queryRef }: RiskOverviewPageProps) {
               {t("riskOverviewPage.emptyScores")}
             </p>
           )}
+      <RiskPrivacyCard riskKey={risk} />
     </div>
   );
 }

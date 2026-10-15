@@ -1,0 +1,63 @@
+# Japanese PrivacyMark risk analysis (リスク分析表): the lifecycle stages a
+# risk applies to, the register entries (processing activities) it was
+# identified for, and the risk analysis's Excel export.
+
+enum PersonalDataLifecycleStage
+    @goModel(
+        model: "go.probo.inc/probo/pkg/coredata.PersonalDataLifecycleStage"
+    ) {
+    COLLECTION
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.PersonalDataLifecycleStageCollection"
+        )
+    TRANSFER
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.PersonalDataLifecycleStageTransfer"
+        )
+    USE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.PersonalDataLifecycleStageUse"
+        )
+    STORAGE
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.PersonalDataLifecycleStageStorage"
+        )
+    DISPOSAL
+        @goEnum(
+            value: "go.probo.inc/probo/pkg/coredata.PersonalDataLifecycleStageDisposal"
+        )
+}
+
+type RiskPrivacyDetails {
+    lifecycleStages: [PersonalDataLifecycleStage!]!
+    updatedAt: Datetime
+}
+
+extend type Mutation {
+    updateRiskPrivacyDetails(
+        input: UpdateRiskPrivacyDetailsInput!
+    ): UpdateRiskPrivacyDetailsPayload!
+    exportRiskPrivacySheet(
+        input: ExportRiskPrivacySheetInput!
+    ): ExportRiskPrivacySheetPayload!
+}
+
+input UpdateRiskPrivacyDetailsInput {
+    riskId: ID!
+    lifecycleStages: [PersonalDataLifecycleStage!] @goField(omittable: true)
+    # Replaces the linked processing activities.
+    processingActivityIds: [ID!] @goField(omittable: true)
+}
+
+type UpdateRiskPrivacyDetailsPayload {
+    risk: Risk!
+}
+
+input ExportRiskPrivacySheetInput {
+    organizationId: ID!
+}
+
+type ExportRiskPrivacySheetPayload {
+    # The .xlsx workbook as a data URL.
+    data: String!
+}

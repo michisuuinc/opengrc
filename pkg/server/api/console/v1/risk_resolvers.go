@@ -532,6 +532,43 @@ func (r *riskResolver) RiskAnalysisHistoryCount(ctx context.Context, obj *types.
 	return count, nil
 }
 
+// PrivacyDetails is the resolver for the privacyDetails field.
+func (r *riskResolver) PrivacyDetails(ctx context.Context, obj *types.Risk) (*types.RiskPrivacyDetails, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionRiskGet)
+	if err != nil {
+		return nil, err
+	}
+
+	details, err := r.probo.RiskPrivacy.GetDetails(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot get risk privacy details", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewRiskPrivacyDetails(details), nil
+}
+
+// PrivacyProcessingActivities is the resolver for the privacyProcessingActivities field.
+func (r *riskResolver) PrivacyProcessingActivities(ctx context.Context, obj *types.Risk) ([]*types.ProcessingActivity, error) {
+	scope, err := r.authorize(ctx, obj.ID, probo.ActionProcessingActivityList)
+	if err != nil {
+		return nil, err
+	}
+
+	activities, err := r.probo.RiskPrivacy.ListProcessingActivities(ctx, scope, obj.ID)
+	if err != nil {
+		r.logger.ErrorCtx(ctx, "cannot list risk processing activities", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	result := make([]*types.ProcessingActivity, len(activities))
+	for i, a := range activities {
+		result[i] = types.NewProcessingActivity(a)
+	}
+
+	return result, nil
+}
+
 // Permission is the resolver for the permission field.
 func (r *riskResolver) Permission(ctx context.Context, obj *types.Risk, action string) (bool, error) {
 	return r.Resolver.Permission(ctx, obj, action)
