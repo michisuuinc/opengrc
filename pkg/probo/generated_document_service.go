@@ -182,6 +182,7 @@ func (s *GeneratedDocumentService) buildStatementOfApplicabilityDocumentData(
 			OrganizationName: organization.Name,
 			CreatedAt:        statementOfApplicability.CreatedAt,
 			TotalControls:    0,
+			Language:         docgen.DetectLanguage(statementOfApplicability.Name),
 		}, nil
 	}
 
@@ -244,6 +245,8 @@ func (s *GeneratedDocumentService) buildStatementOfApplicabilityDocumentData(
 	}
 
 	rows := make([]docgen.SOARow, 0, len(applicabilityStatements))
+	// Fork: the statement is in Japanese when its controls are.
+	language := statementOfApplicabilityLanguage(statementOfApplicability.Name, applicabilityStatements, controlMap, frameworkMap)
 
 	for _, stmt := range applicabilityStatements {
 		control := controlMap[stmt.ControlID]
@@ -275,24 +278,24 @@ func (s *GeneratedDocumentService) buildStatementOfApplicabilityDocumentData(
 
 		if applicable {
 			_, hasLegal := oblSet[obligationKey{stmt.ControlID, coredata.ObligationTypeLegal}]
-			regulatory = docgen.BoolLabel(hasLegal)
+			regulatory = docgen.BoolLabelIn(language, hasLegal)
 			_, hasContractual := oblSet[obligationKey{stmt.ControlID, coredata.ObligationTypeContractual}]
-			contractual = docgen.BoolLabel(hasContractual)
-			bestPractice = docgen.BoolLabel(control.BestPractice)
+			contractual = docgen.BoolLabelIn(language, hasContractual)
+			bestPractice = docgen.BoolLabelIn(language, control.BestPractice)
 			_, hasRisk := riskSet[stmt.ControlID]
-			riskAssessment = docgen.BoolLabel(hasRisk)
+			riskAssessment = docgen.BoolLabelIn(language, hasRisk)
 		}
 
 		maturityLevel := "-"
 		if applicable {
-			maturityLevel = docgen.MaturityLabel(control.MaturityLevel)
+			maturityLevel = docgen.MaturityLabelIn(language, control.MaturityLevel)
 		}
 
 		rows = append(rows, docgen.SOARow{
 			FrameworkName:        framework.Name,
 			ControlSection:       control.SectionTitle,
 			ControlName:          control.Name,
-			Applicability:        docgen.BoolLabel(applicable),
+			Applicability:        docgen.ApplicabilityLabelIn(language, applicable),
 			Justification:        justification,
 			MaturityLevel:        maturityLevel,
 			NotImplJustification: notImplJustification,
@@ -309,6 +312,7 @@ func (s *GeneratedDocumentService) buildStatementOfApplicabilityDocumentData(
 		CreatedAt:        statementOfApplicability.CreatedAt,
 		TotalControls:    len(applicabilityStatements),
 		Rows:             rows,
+		Language:         language,
 	}, nil
 }
 
@@ -869,8 +873,13 @@ var soaTemplate = template.Must(
 )
 
 func BuildStatementOfApplicabilityDocument(data docgen.StatementOfApplicabilityData) (string, error) {
+	tmpl := soaTemplate
+	if docgen.IsJapanese(data.Language) {
+		tmpl = soaTemplateJapanese
+	}
+
 	var buf bytes.Buffer
-	if err := soaTemplate.Execute(&buf, data); err != nil {
+	if err := tmpl.Execute(&buf, data); err != nil {
 		return "", fmt.Errorf("cannot execute soa template: %w", err)
 	}
 
