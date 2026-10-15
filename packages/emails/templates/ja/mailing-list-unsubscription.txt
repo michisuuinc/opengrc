@@ -1,0 +1,8 @@
+{{.SenderCompanyName}}
+
+{{.RecipientFullName}} 様
+
+{{.OrganizationName}} のコンプライアンスのアップデートの購読を解除しました。今後、コンプライアンスポータルに新しい情報が公開されても、お知らせは届きません。
+
+{{.SenderCompanyHeadquarterAddress}}
+Powered By Probo

@@ -1,0 +1,12 @@
+Probo
+
+{{.RecipientFullName}} 様
+
+{{.OrganizationName}} のコンプライアンスポータルで申請された、次のファイルの閲覧は承認されませんでした。
+
+{{range .FileNames}}
+- {{.}}
+{{end}}
+
+{{.SenderCompanyHeadquarterAddress}}
+Powered By Probo

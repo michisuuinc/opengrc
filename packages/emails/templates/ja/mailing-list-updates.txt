@@ -1,0 +1,22 @@
+{{.SenderCompanyName}}
+
+{{.RecipientFullName}} 様
+
+{{.OrganizationName}} が、コンプライアンスの新しいアップデートを公開しました。
+
+{{.NewsTitle}}
+
+{{.NewsBody}}
+
+コンプライアンスポータルを見る：
+
+{{.CompliancePageURL}}
+
+{{.OrganizationName}} のコンプライアンスのアップデートを購読しているため、このメールをお送りしています。
+
+購読を解除するには、次のページを開いてください。
+
+{{.UnsubscribeURL}}
+
+{{.SenderCompanyHeadquarterAddress}}
+Powered By Probo

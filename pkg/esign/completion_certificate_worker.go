@@ -275,7 +275,23 @@ func (h *completionCertificateHandler) generateCertificate(
 		return nil, nil, fmt.Errorf("cannot resolve presenter config: %w", err)
 	}
 
-	emailPresenter := emails.NewPresenterFromConfig(presenterCfg, ref.UnrefOrZero(signature.SignerFullName))
+	// Fork: the email is in the signer's language.
+	var languages []*string
+	if err := h.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var err error
+			languages, err = coredata.EmailAddressLanguagePreferences(ctx, conn, mail.Addr(signature.SignerEmail), signature.OrganizationID)
+			return err
+		},
+	); err != nil {
+		return nil, nil, fmt.Errorf("cannot load email language: %w", err)
+	}
+
+	language := emails.ResolveLanguage(languages...)
+
+	emailPresenter := emails.NewPresenterFromConfig(presenterCfg, ref.UnrefOrZero(signature.SignerFullName)).
+		WithLanguage(language)
 
 	docName := ref.UnrefOrZero(signature.DocumentName)
 	if docName == "" {
@@ -285,6 +301,11 @@ func (h *completionCertificateHandler) generateCertificate(
 	subject := signature.EmailSubject
 	if subject == "" {
 		subject = fmt.Sprintf("Your signed %s - Certificate of Completion", docName)
+	}
+
+	// Fork: the stored subject is in English.
+	if language == emails.LanguageJapanese {
+		subject = fmt.Sprintf("%s の完了証明書（署名済み）", docName)
 	}
 
 	textBody, htmlBody, err := emailPresenter.RenderElectronicSignatureCertificate(ctx, ref.UnrefOrZero(signature.SignerFullName), docName, subject)

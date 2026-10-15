@@ -156,6 +156,9 @@ type Organization implements Node {
         orderBy: AssetOrder
     ): AssetConnection! @goField(forceResolver: true)
 
+    # Fork: the default email language (organization_language.graphql).
+    emailLanguage: String @goField(forceResolver: true)
+
     trainingPlans(
         first: Int
         after: CursorKey

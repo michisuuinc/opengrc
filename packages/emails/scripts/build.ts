@@ -39,6 +39,22 @@ import MailingListSubscription from "../src/MailingListSubscription";
 import MailingListUnsubscription from "../src/MailingListUnsubscription";
 import LogExport from "../src/LogExport";
 import MagicLink from "../src/MagicLink";
+// Fork: Japanese emails (src/ja/, templates/ja/), built into dist/ja/.
+import MailingListUpdatesJapanese from "../src/ja/MailingListUpdates";
+import ConfirmEmailJapanese from "../src/ja/ConfirmEmail";
+import DocumentExportJapanese from "../src/ja/DocumentExport";
+import DocumentApprovalJapanese from "../src/ja/DocumentApproval";
+import DocumentSigningJapanese from "../src/ja/DocumentSigning";
+import FrameworkExportJapanese from "../src/ja/FrameworkExport";
+import InvitationJapanese from "../src/ja/Invitation";
+import PasswordResetJapanese from "../src/ja/PasswordReset";
+import CompliancePortalAccessJapanese from "../src/ja/CompliancePortalAccess";
+import CompliancePortalDocumentAccessRejectedJapanese from "../src/ja/CompliancePortalDocumentAccessRejected";
+import ElectronicSignatureCertificateJapanese from "../src/ja/ElectronicSignatureCertificate";
+import MailingListSubscriptionJapanese from "../src/ja/MailingListSubscription";
+import MailingListUnsubscriptionJapanese from "../src/ja/MailingListUnsubscription";
+import LogExportJapanese from "../src/ja/LogExport";
+import MagicLinkJapanese from "../src/ja/MagicLink";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -111,6 +127,87 @@ const templates: TemplateConfig[] = [
   },
 ];
 
+const japaneseTemplates: TemplateConfig[] = [
+  {
+    name: "mailing-list-updates",
+    render: () => MailingListUpdatesJapanese(),
+  },
+  {
+    name: "confirm-email",
+    render: () => ConfirmEmailJapanese(),
+  },
+  {
+    name: "document-export",
+    render: () => DocumentExportJapanese(),
+  },
+  {
+    name: "document-approval",
+    render: () => DocumentApprovalJapanese(),
+  },
+  {
+    name: "document-signing",
+    render: () => DocumentSigningJapanese(),
+  },
+  {
+    name: "framework-export",
+    render: () => FrameworkExportJapanese(),
+  },
+  {
+    name: "invitation",
+    render: () => InvitationJapanese(),
+  },
+  {
+    name: "password-reset",
+    render: () => PasswordResetJapanese(),
+  },
+  {
+    name: "compliance-portal-access",
+    render: () => CompliancePortalAccessJapanese(),
+  },
+  {
+    name: "compliance-portal-document-access-rejected",
+    render: () => CompliancePortalDocumentAccessRejectedJapanese(),
+  },
+  {
+    name: "electronic-signature-certificate",
+    render: () => ElectronicSignatureCertificateJapanese(),
+  },
+  {
+    name: "mailing-list-subscription",
+    render: () => MailingListSubscriptionJapanese(),
+  },
+  {
+    name: "mailing-list-unsubscription",
+    render: () => MailingListUnsubscriptionJapanese(),
+  },
+  {
+    name: "log-export",
+    render: () => LogExportJapanese(),
+  },
+  {
+    name: "magic-link",
+    render: () => MagicLinkJapanese(),
+  },
+];
+
+async function buildLanguage(
+  list: TemplateConfig[],
+  outputDir: string,
+  templatesDir: string,
+) {
+  await mkdir(outputDir, { recursive: true });
+
+  for (const template of list) {
+    const html = await render(template.render(), { pretty: true });
+
+    await writeFile(join(outputDir, `${template.name}.html.tmpl`), html);
+    await copyFile(
+      join(templatesDir, `${template.name}.txt`),
+      join(outputDir, `${template.name}.txt.tmpl`),
+    );
+  }
+}
+
 async function build() {
   const outputDir = join(__dirname, "..", "dist");
   const templatesDir = join(__dirname, "..", "templates");
@@ -126,6 +223,12 @@ async function build() {
     await writeFile(htmlPath, html);
     await copyFile(txtSrcPath, txtDstPath);
   }
+
+  await buildLanguage(
+    japaneseTemplates,
+    join(outputDir, "ja"),
+    join(templatesDir, "ja"),
+  );
 }
 
 build().catch((err) => {

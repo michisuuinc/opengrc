@@ -1,0 +1,12 @@
+{{.SenderCompanyName}}
+
+{{.RecipientFullName}} 様
+
+{{.DocumentName}} の完了証明書（Certificate of Completion）を、PDF でこのメールに添付しています。
+
+証明書には、封印、タイムスタンプ、署名の経過など、署名の記録がすべて含まれています。
+
+ご不明な点は、サポートにお問い合わせください。
+
+{{.SenderCompanyHeadquarterAddress}}
+Powered By Probo

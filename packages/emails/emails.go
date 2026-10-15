@@ -45,6 +45,9 @@ type (
 		SenderCompanyWebsiteURL         string
 		SenderCompanyLogoPath           string
 		SenderCompanyHeadquarterAddress string
+		// Fork: the language of the emails, such as the organization's
+		// default (emails_language.go). WithLanguage overrides it.
+		Language string
 	}
 
 	CommonVariables struct {
@@ -64,6 +67,9 @@ type (
 	Presenter struct {
 		config            PresenterConfig
 		RecipientFullName string
+		// Fork: the language of the email (emails_language.go). Empty or
+		// unsupported means English.
+		Language string
 	}
 
 	DocumentSummary struct {
@@ -89,6 +95,7 @@ func NewPresenterFromConfig(cfg PresenterConfig, fullName string) *Presenter {
 	return &Presenter{
 		config:            cfg,
 		RecipientFullName: fullName,
+		Language:          NormalizeLanguage(cfg.Language),
 	}
 }
 
@@ -187,9 +194,9 @@ func (p *Presenter) RenderConfirmEmail(ctx context.Context, confirmationURLPath 
 		ConfirmationUrl: confirmationUrl,
 	}
 
-	textBody, htmlBody, err = renderEmail(confirmEmailTextTemplate, confirmEmailHTMLTemplate, data)
+	textBody, htmlBody, err = p.renderLocalized(confirmEmailTextTemplate, confirmEmailHTMLTemplate, data)
 
-	return subjectConfirmEmail, textBody, htmlBody, err
+	return p.subject(subjectConfirmEmail), textBody, htmlBody, err
 }
 
 func (p *Presenter) RenderPasswordReset(ctx context.Context, resetPasswordURLPath string, resetPasswordToken string) (subject string, textBody string, htmlBody *string, err error) {
@@ -212,9 +219,9 @@ func (p *Presenter) RenderPasswordReset(ctx context.Context, resetPasswordURLPat
 		ResetUrl:        resetUrl,
 	}
 
-	textBody, htmlBody, err = renderEmail(passwordResetTextTemplate, passwordResetHTMLTemplate, data)
+	textBody, htmlBody, err = p.renderLocalized(passwordResetTextTemplate, passwordResetHTMLTemplate, data)
 
-	return subjectPasswordReset, textBody, htmlBody, err
+	return p.subject(subjectPasswordReset), textBody, htmlBody, err
 }
 
 func (p *Presenter) RenderInvitation(ctx context.Context, invitationURLPath string, invitationToken string, organizationName string) (subject string, textBody string, htmlBody *string, err error) {
@@ -239,9 +246,9 @@ func (p *Presenter) RenderInvitation(ctx context.Context, invitationURLPath stri
 		OrganizationName: organizationName,
 	}
 
-	textBody, htmlBody, err = renderEmail(invitationTextTemplate, invitationHTMLTemplate, data)
+	textBody, htmlBody, err = p.renderLocalized(invitationTextTemplate, invitationHTMLTemplate, data)
 
-	return fmt.Sprintf(subjectInvitation, organizationName), textBody, htmlBody, err
+	return fmt.Sprintf(p.subject(subjectInvitation), organizationName), textBody, htmlBody, err
 }
 
 func (p *Presenter) RenderDocumentApproval(
@@ -267,9 +274,9 @@ func (p *Presenter) RenderDocumentApproval(
 		Documents:        documents,
 	}
 
-	textBody, htmlBody, err = renderEmail(documentApprovalTextTemplate, documentApprovalHTMLTemplate, data)
+	textBody, htmlBody, err = p.renderLocalized(documentApprovalTextTemplate, documentApprovalHTMLTemplate, data)
 
-	return fmt.Sprintf(subjectDocumentApproval, organizationName), textBody, htmlBody, err
+	return fmt.Sprintf(p.subject(subjectDocumentApproval), organizationName), textBody, htmlBody, err
 }
 
 func (p *Presenter) RenderDocumentSigning(
@@ -295,9 +302,9 @@ func (p *Presenter) RenderDocumentSigning(
 		Documents:        documents,
 	}
 
-	textBody, htmlBody, err = renderEmail(documentSigningTextTemplate, documentSigningHTMLTemplate, data)
+	textBody, htmlBody, err = p.renderLocalized(documentSigningTextTemplate, documentSigningHTMLTemplate, data)
 
-	return fmt.Sprintf(subjectDocumentSigning, organizationName), textBody, htmlBody, err
+	return fmt.Sprintf(p.subject(subjectDocumentSigning), organizationName), textBody, htmlBody, err
 }
 
 func (p *Presenter) RenderDocumentExport(ctx context.Context, downloadUrl string) (subject string, textBody string, htmlBody *string, err error) {
@@ -314,9 +321,9 @@ func (p *Presenter) RenderDocumentExport(ctx context.Context, downloadUrl string
 		DownloadUrl:     downloadUrl,
 	}
 
-	textBody, htmlBody, err = renderEmail(documentExportTextTemplate, documentExportHTMLTemplate, data)
+	textBody, htmlBody, err = p.renderLocalized(documentExportTextTemplate, documentExportHTMLTemplate, data)
 
-	return subjectDocumentExport, textBody, htmlBody, err
+	return p.subject(subjectDocumentExport), textBody, htmlBody, err
 }
 
 func (p *Presenter) RenderFrameworkExport(ctx context.Context, downloadUrl string) (subject string, textBody string, htmlBody *string, err error) {
@@ -333,9 +340,9 @@ func (p *Presenter) RenderFrameworkExport(ctx context.Context, downloadUrl strin
 		DownloadUrl:     downloadUrl,
 	}
 
-	textBody, htmlBody, err = renderEmail(frameworkExportTextTemplate, frameworkExportHTMLTemplate, data)
+	textBody, htmlBody, err = p.renderLocalized(frameworkExportTextTemplate, frameworkExportHTMLTemplate, data)
 
-	return subjectFrameworkExport, textBody, htmlBody, err
+	return p.subject(subjectFrameworkExport), textBody, htmlBody, err
 }
 
 func (p *Presenter) RenderLogExport(ctx context.Context, downloadUrl string, isSCIMEvent bool) (subject string, textBody string, htmlBody *string, err error) {
@@ -344,12 +351,12 @@ func (p *Presenter) RenderLogExport(ctx context.Context, downloadUrl string, isS
 		return "", "", nil, fmt.Errorf("cannot get common variables: %w", err)
 	}
 
-	subject = subjectAuditLogExport
-	exportLabel := "audit log"
+	subject = p.subject(subjectAuditLogExport)
+	exportLabel := p.label("audit log")
 
 	if isSCIMEvent {
-		subject = subjectSCIMEventExport
-		exportLabel = "SCIM event"
+		subject = p.subject(subjectSCIMEventExport)
+		exportLabel = p.label("SCIM event")
 	}
 
 	data := struct {
@@ -364,7 +371,7 @@ func (p *Presenter) RenderLogExport(ctx context.Context, downloadUrl string, isS
 		DownloadUrl:     downloadUrl,
 	}
 
-	textBody, htmlBody, err = renderEmail(logExportTextTemplate, logExportHTMLTemplate, data)
+	textBody, htmlBody, err = p.renderLocalized(logExportTextTemplate, logExportHTMLTemplate, data)
 
 	return subject, textBody, htmlBody, err
 }
@@ -383,9 +390,9 @@ func (p *Presenter) RenderCompliancePortalAccess(ctx context.Context, organizati
 		OrganizationName: organizationName,
 	}
 
-	textBody, htmlBody, err = renderEmail(compliancePortalAccessTextTemplate, compliancePortalAccessHTMLTemplate, data)
+	textBody, htmlBody, err = p.renderLocalized(compliancePortalAccessTextTemplate, compliancePortalAccessHTMLTemplate, data)
 
-	return fmt.Sprintf(subjectCompliancePortalAccess, organizationName), textBody, htmlBody, err
+	return fmt.Sprintf(p.subject(subjectCompliancePortalAccess), organizationName), textBody, htmlBody, err
 }
 
 func (p *Presenter) RenderCompliancePortalDocumentAccessRejected(
@@ -408,9 +415,9 @@ func (p *Presenter) RenderCompliancePortalDocumentAccessRejected(
 		OrganizationName: organizationName,
 	}
 
-	textBody, htmlBody, err = renderEmail(compliancePortalDocumentAccessRejectedTextTemplate, compliancePortalDocumentAccessRejectedHTMLTemplate, data)
+	textBody, htmlBody, err = p.renderLocalized(compliancePortalDocumentAccessRejectedTextTemplate, compliancePortalDocumentAccessRejectedHTMLTemplate, data)
 
-	return fmt.Sprintf(subjectCompliancePortalDocumentAccessRejected, organizationName), textBody, htmlBody, err
+	return fmt.Sprintf(p.subject(subjectCompliancePortalDocumentAccessRejected), organizationName), textBody, htmlBody, err
 }
 
 func (p *Presenter) RenderMagicLink(ctx context.Context, magicLinkUrlPath string, tokenString string, tokenDuration time.Duration, organizationName string) (subject string, textBody string, htmlBody *string, err error) {
@@ -431,9 +438,9 @@ func (p *Presenter) RenderMagicLink(ctx context.Context, magicLinkUrlPath string
 		OrganizationName:  organizationName,
 	}
 
-	textBody, htmlBody, err = renderEmail(magicLinkTextTemplate, magicLinkHTMLTemplate, data)
+	textBody, htmlBody, err = p.renderLocalized(magicLinkTextTemplate, magicLinkHTMLTemplate, data)
 
-	return fmt.Sprintf(subjectMagicLink, organizationName), textBody, htmlBody, err
+	return fmt.Sprintf(p.subject(subjectMagicLink), organizationName), textBody, htmlBody, err
 }
 
 func (p *Presenter) RenderElectronicSignatureCertificate(ctx context.Context, signerName string, documentName string, subject string) (textBody string, htmlBody *string, err error) {
@@ -454,7 +461,7 @@ func (p *Presenter) RenderElectronicSignatureCertificate(ctx context.Context, si
 		Subject:         subject,
 	}
 
-	return renderEmail(electronicSignatureCertificateTextTemplate, electronicSignatureCertificateHTMLTemplate, data)
+	return p.renderLocalized(electronicSignatureCertificateTextTemplate, electronicSignatureCertificateHTMLTemplate, data)
 }
 
 func (p *Presenter) RenderMailingListSubscription(ctx context.Context, organizationName string, confirmURL string, unsubscribeURL string) (subject string, textBody string, htmlBody *string, err error) {
@@ -475,12 +482,12 @@ func (p *Presenter) RenderMailingListSubscription(ctx context.Context, organizat
 		UnsubscribeURL:   unsubscribeURL,
 	}
 
-	textBody, htmlBody, err = renderEmail(mailingListSubscriptionTextTemplate, mailingListSubscriptionHTMLTemplate, data)
+	textBody, htmlBody, err = p.renderLocalized(mailingListSubscriptionTextTemplate, mailingListSubscriptionHTMLTemplate, data)
 	if err != nil {
 		return "", "", nil, err
 	}
 
-	return fmt.Sprintf(subjectMailingListSubscription, organizationName), textBody, htmlBody, nil
+	return fmt.Sprintf(p.subject(subjectMailingListSubscription), organizationName), textBody, htmlBody, nil
 }
 
 func (p *Presenter) RenderMailingListUnsubscription(ctx context.Context, organizationName string) (subject string, textBody string, htmlBody *string, err error) {
@@ -497,12 +504,12 @@ func (p *Presenter) RenderMailingListUnsubscription(ctx context.Context, organiz
 		OrganizationName: organizationName,
 	}
 
-	textBody, htmlBody, err = renderEmail(mailingListUnsubscriptionTextTemplate, mailingListUnsubscriptionHTMLTemplate, data)
+	textBody, htmlBody, err = p.renderLocalized(mailingListUnsubscriptionTextTemplate, mailingListUnsubscriptionHTMLTemplate, data)
 	if err != nil {
 		return "", "", nil, err
 	}
 
-	return fmt.Sprintf(subjectMailingListUnsubscription, organizationName), textBody, htmlBody, nil
+	return fmt.Sprintf(p.subject(subjectMailingListUnsubscription), organizationName), textBody, htmlBody, nil
 }
 
 func (p *Presenter) RenderMailingListNews(ctx context.Context, organizationName string, newsTitle string, newsBody string, compliancePageURL string, unsubscribeURL string) (subject string, textBody string, htmlBody *string, err error) {
@@ -527,12 +534,12 @@ func (p *Presenter) RenderMailingListNews(ctx context.Context, organizationName 
 		UnsubscribeURL:    unsubscribeURL,
 	}
 
-	textBody, htmlBody, err = renderEmail(mailingListUpdatesTextTemplate, mailingListUpdatesHTMLTemplate, data)
+	textBody, htmlBody, err = p.renderLocalized(mailingListUpdatesTextTemplate, mailingListUpdatesHTMLTemplate, data)
 	if err != nil {
 		return "", "", nil, err
 	}
 
-	return fmt.Sprintf(subjectMailingListUpdates, organizationName, newsTitle), textBody, htmlBody, nil
+	return fmt.Sprintf(p.subject(subjectMailingListUpdates), organizationName, newsTitle), textBody, htmlBody, nil
 }
 
 func renderEmail(textTemplate *texttemplate.Template, htmlTemplate *htmltemplate.Template, data any) (textBody string, htmlBody *string, err error) {

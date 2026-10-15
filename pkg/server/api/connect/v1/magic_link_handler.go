@@ -27,6 +27,7 @@ import (
 
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/mail"
@@ -109,6 +110,8 @@ func (h *MagicLinkHandler) SendHandler(w http.ResponseWriter, r *http.Request) {
 		URLPath:          magicLinkConfirmPath,
 		MagicLinkBaseURL: &proboURL,
 		Continue:         &safeContinue,
+		// Fork: the email's language when the requester has none saved.
+		Language: emails.PreferredLanguage(r.Header.Get("Accept-Language")),
 	}
 
 	if clientID := oauth2ClientIDFromContinueURL(safeContinue); clientID != "" {

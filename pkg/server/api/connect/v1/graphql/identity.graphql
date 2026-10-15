@@ -3,6 +3,8 @@ type Identity implements Node {
   email: EmailAddr!
   fullName: String!
   emailVerified: Boolean!
+  # Fork: the saved language (identity_locale.graphql), or null.
+  locale: String
   avatar: File @goField(forceResolver: true)
   createdAt: Datetime!
   updatedAt: Datetime!

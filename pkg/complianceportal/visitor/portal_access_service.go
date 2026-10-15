@@ -714,7 +714,14 @@ func (s *Service) sendPortalAccessEmail(
 		return fmt.Errorf("cannot get compliance page email presenter config: %w", err)
 	}
 
-	emailPresenter := emails.NewPresenterFromConfig(emailPresenterCfg, identity.FullName)
+	// Fork: the email is in the recipient's language.
+	languages, err := coredata.IdentityLanguagePreferences(ctx, tx, identity, access.OrganizationID)
+	if err != nil {
+		return fmt.Errorf("cannot load email language: %w", err)
+	}
+
+	emailPresenter := emails.NewPresenterFromConfig(emailPresenterCfg, identity.FullName).
+		WithLanguage(emails.ResolveLanguage(languages...))
 
 	subject, textBody, htmlBody, err := emailPresenter.RenderCompliancePortalAccess(ctx, organization.Name)
 	if err != nil {
@@ -949,7 +956,14 @@ func (s *Service) sendPortalDocumentAccessRejectedEmail(
 		return fmt.Errorf("cannot get compliance page email presenter config: %w", err)
 	}
 
-	emailPresenter := emails.NewPresenterFromConfig(emailPresenterCfg, identity.FullName)
+	// Fork: the email is in the recipient's language.
+	languages, err := coredata.IdentityLanguagePreferences(ctx, tx, identity, access.OrganizationID)
+	if err != nil {
+		return fmt.Errorf("cannot load email language: %w", err)
+	}
+
+	emailPresenter := emails.NewPresenterFromConfig(emailPresenterCfg, identity.FullName).
+		WithLanguage(emails.ResolveLanguage(languages...))
 
 	subject, textBody, htmlBody, err := emailPresenter.RenderCompliancePortalDocumentAccessRejected(
 		ctx,

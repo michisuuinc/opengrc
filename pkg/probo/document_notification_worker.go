@@ -379,6 +379,15 @@ func (s *DocumentService) sendNotification(
 		return err
 	}
 
+	// Fork: the email, including the document types, is in the
+	// recipient's language.
+	languages, err := coredata.MembershipProfileLanguagePreferences(ctx, tx, recipient)
+	if err != nil {
+		return fmt.Errorf("cannot load email language: %w", err)
+	}
+
+	language := emails.ResolveLanguage(languages...)
+
 	documents := make([]emails.DocumentSummary, 0, len(versions))
 	for _, version := range versions {
 		documentPath, err := documentDestinationPath(kind, organizationID, version.DocumentID)
@@ -393,7 +402,7 @@ func (s *DocumentService) sendNotification(
 
 		documents = append(documents, emails.DocumentSummary{
 			Title: version.Title,
-			Type:  version.DocumentType.Label(),
+			Type:  version.DocumentType.LabelIn(language),
 			URL:   documentURL,
 		})
 	}
@@ -412,7 +421,7 @@ func (s *DocumentService) sendNotification(
 		return fmt.Errorf("cannot build main notification URL: %w", err)
 	}
 
-	email, err := s.renderNotificationEmail(ctx, kind, recipient, organization.Name, mainURL, documents)
+	email, err := s.renderNotificationEmail(ctx, kind, recipient, organization.Name, mainURL, documents, language)
 	if err != nil {
 		return fmt.Errorf("cannot render notification email: %w", err)
 	}
@@ -431,8 +440,9 @@ func (s *DocumentService) renderNotificationEmail(
 	organizationName string,
 	mainURL string,
 	documents []emails.DocumentSummary,
+	language string,
 ) (*coredata.Email, error) {
-	emailPresenter := emails.NewPresenter(s.svc.baseURL, recipient.FullName)
+	emailPresenter := emails.NewPresenter(s.svc.baseURL, recipient.FullName).WithLanguage(language)
 
 	var (
 		subject  string

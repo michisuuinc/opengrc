@@ -1,0 +1,20 @@
+Probo
+
+{{.RecipientFullName}} 様
+
+{{.OrganizationName}} から、次の文書の承認を依頼されています。
+
+{{range .Documents}}- {{.Title}}（{{.Type}}）: {{.URL}}
+{{end}}
+次のリンクから内容を確認し、文書ごとに承認又は却下してください。
+
+{{.ApprovalUrl}}
+
+ご不明な点は、社内の情報セキュリティの担当者にお問い合わせください。
+
+この手続きは、{{.OrganizationName}} に代わって Probo が安全に管理しています。
+
+よろしくお願いいたします。
+
+{{.SenderCompanyHeadquarterAddress}}
+Powered By Probo

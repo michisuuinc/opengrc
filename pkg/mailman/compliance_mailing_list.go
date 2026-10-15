@@ -67,7 +67,9 @@ func (s *Service) mailingListEmailConfig(
 		organization      = &coredata.Organization{}
 		compliancePageURL string
 		logoFile          = &coredata.File{}
-		defaultCfg        = emails.DefaultPresenterConfig(s.apiBaseURL.String())
+		// Fork: the organization's default email language.
+		organizationLanguage string
+		defaultCfg           = emails.DefaultPresenterConfig(s.apiBaseURL.String())
 	)
 
 	scope := coredata.NewScopeFromObjectID(mailingListID)
@@ -97,6 +99,17 @@ func (s *Service) mailingListEmailConfig(
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
+			// Fork: subscribers have no language of their own, so the
+			// emails use the organization's default.
+			language, err := coredata.LoadOrganizationDefaultLanguage(ctx, conn, organization.ID)
+			if err != nil {
+				return fmt.Errorf("cannot load organization default language: %w", err)
+			}
+
+			if language != nil {
+				organizationLanguage = *language
+			}
+
 			publicURL, err := s.compliancePortal.PublicURLForCompliancePortal(
 				ctx,
 				conn,
@@ -120,6 +133,8 @@ func (s *Service) mailingListEmailConfig(
 	if err != nil {
 		return defaultCfg, "", "", nil, err
 	}
+
+	cfg.Language = organizationLanguage
 
 	compliancePageBase, err := baseurl.Parse(compliancePageURL)
 	if err != nil {

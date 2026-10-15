@@ -118,6 +118,7 @@ type (
 		AuditPrivacy                          *AuditPrivacyService
 		ThirdPartyPrivacyEvaluations          *ThirdPartyPrivacyEvaluationService
 		RightsRequestPrivacy                  *RightsRequestPrivacyService
+		OrganizationLanguages                 *OrganizationLanguageService
 		DataProtectionImpactAssessments       *DataProtectionImpactAssessmentService
 		TransferImpactAssessments             *TransferImpactAssessmentService
 		StatementsOfApplicability             *StatementOfApplicabilityService
@@ -237,6 +238,7 @@ func NewService(
 	svc.AuditPrivacy = &AuditPrivacyService{svc: svc}
 	svc.ThirdPartyPrivacyEvaluations = &ThirdPartyPrivacyEvaluationService{svc: svc}
 	svc.RightsRequestPrivacy = &RightsRequestPrivacyService{svc: svc}
+	svc.OrganizationLanguages = &OrganizationLanguageService{svc: svc}
 	svc.DataProtectionImpactAssessments = &DataProtectionImpactAssessmentService{svc: svc}
 	svc.TransferImpactAssessments = &TransferImpactAssessmentService{svc: svc}
 	svc.StatementsOfApplicability = &StatementOfApplicabilityService{svc: svc}

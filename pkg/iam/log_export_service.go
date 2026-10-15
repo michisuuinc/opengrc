@@ -187,7 +187,14 @@ func (s *LogExportService) SendExportEmail(
 
 			downloadURL := s.fm.GenerateFileURL(file)
 
-			emailPresenter := emails.NewPresenter(s.baseURL, recipientName)
+			// Fork: the email is in the recipient's language.
+			languages, err := coredata.EmailAddressLanguagePreferences(ctx, tx, recipientEmail, file.OrganizationID)
+			if err != nil {
+				return fmt.Errorf("cannot load email language: %w", err)
+			}
+
+			emailPresenter := emails.NewPresenter(s.baseURL, recipientName).
+				WithLanguage(emails.ResolveLanguage(languages...))
 
 			isSCIMEvent := strings.HasPrefix(file.FileName, "scim-event-export")
 
