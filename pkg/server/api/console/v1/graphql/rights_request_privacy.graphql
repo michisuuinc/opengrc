@@ -122,6 +122,10 @@ type RightsRequestPrivacyDetails
     answerMethod: RightsRequestAnswerMethod
     answeredOn: String
     approver: Profile @goField(forceResolver: true)
+    # First response to a complaint or consultation.
+    firstRespondedOn: String
+    # The finding opened when the cause lies in the company's own handling.
+    finding: Finding @goField(forceResolver: true)
     # Days from receipt to the answer, without the wait for missing
     # documents. Null until answered.
     handlingDays: Int
@@ -133,6 +137,10 @@ extend type Mutation {
         input: UpdateRightsRequestPrivacyDetailsInput!
     ): UpdateRightsRequestPrivacyDetailsPayload!
     exportRightsRequestRecords(
+        input: ExportRightsRequestRecordsInput!
+    ): ExportRightsRequestRecordsPayload!
+    # Only complaints and consultations, with the counts per department.
+    exportComplaintRecords(
         input: ExportRightsRequestRecordsInput!
     ): ExportRightsRequestRecordsPayload!
 }
@@ -156,6 +164,8 @@ input UpdateRightsRequestPrivacyDetailsInput {
     answerMethod: RightsRequestAnswerMethod
     answeredOn: String
     approverId: ID
+    firstRespondedOn: String
+    findingId: ID
 }
 
 type UpdateRightsRequestPrivacyDetailsPayload {

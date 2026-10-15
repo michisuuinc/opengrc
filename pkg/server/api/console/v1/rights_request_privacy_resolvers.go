@@ -7,14 +7,15 @@ package console_v1
 
 import (
 	"context"
-	"encoding/base64"
-	"fmt"
+	"errors"
 
+	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/iam"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/xlsxexport"
+	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
 // UpdateRightsRequestPrivacyDetails is the resolver for the updateRightsRequestPrivacyDetails field.
@@ -27,6 +28,13 @@ func (r *mutationResolver) UpdateRightsRequestPrivacyDetails(ctx context.Context
 	// Choosing the handler and approver needs to see the members.
 	if _, err := r.authorize(ctx, input.RightsRequestID, iam.ActionMembershipProfileList); err != nil {
 		return nil, err
+	}
+
+	// Linking a finding needs to see it.
+	if input.FindingID != nil {
+		if _, err := r.authorize(ctx, *input.FindingID, probo.ActionFindingGet); err != nil {
+			return nil, err
+		}
 	}
 
 	req, err := newUpdateRightsRequestPrivacyDetailsRequest(input)
@@ -50,38 +58,17 @@ func (r *mutationResolver) UpdateRightsRequestPrivacyDetails(ctx context.Context
 
 // ExportRightsRequestRecords is the resolver for the exportRightsRequestRecords field.
 func (r *mutationResolver) ExportRightsRequestRecords(ctx context.Context, input types.ExportRightsRequestRecordsInput) (*types.ExportRightsRequestRecordsPayload, error) {
-	// The records name the handlers and approvers besides the requests.
-	if _, err := r.authorize(ctx, input.OrganizationID, iam.ActionMembershipProfileList); err != nil {
+	return r.exportRightsRequestWorkbook(ctx, input, r.probo.RightsRequestPrivacy.Export)
+}
+
+// ExportComplaintRecords is the resolver for the exportComplaintRecords field.
+func (r *mutationResolver) ExportComplaintRecords(ctx context.Context, input types.ExportRightsRequestRecordsInput) (*types.ExportRightsRequestRecordsPayload, error) {
+	// The record names the finding opened for each complaint.
+	if _, err := r.authorize(ctx, input.OrganizationID, probo.ActionFindingList); err != nil {
 		return nil, err
 	}
 
-	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionRightsRequestList)
-	if err != nil {
-		return nil, err
-	}
-
-	receivedFrom, err := parseOptionalTrainingDate("receivedFrom", input.ReceivedFrom)
-	if err != nil {
-		return nil, r.rightsRequestRecordError(ctx, err, "")
-	}
-
-	receivedTo, err := parseOptionalTrainingDate("receivedTo", input.ReceivedTo)
-	if err != nil {
-		return nil, r.rightsRequestRecordError(ctx, err, "")
-	}
-
-	workbook, err := r.probo.RightsRequestPrivacy.Export(ctx, scope, probo.ExportRightsRequestRecordsRequest{
-		OrganizationID: input.OrganizationID,
-		ReceivedFrom:   receivedFrom,
-		ReceivedTo:     receivedTo,
-	})
-	if err != nil {
-		return nil, r.rightsRequestRecordError(ctx, err, "cannot export rights request records")
-	}
-
-	return &types.ExportRightsRequestRecordsPayload{
-		Data: fmt.Sprintf("data:%s;base64,%s", xlsxexport.ContentType, base64.StdEncoding.EncodeToString(workbook)),
-	}, nil
+	return r.exportRightsRequestWorkbook(ctx, input, r.probo.RightsRequestPrivacy.ExportComplaints)
 }
 
 // Handler is the resolver for the handler field.
@@ -92,6 +79,34 @@ func (r *rightsRequestPrivacyDetailsResolver) Handler(ctx context.Context, obj *
 // Approver is the resolver for the approver field.
 func (r *rightsRequestPrivacyDetailsResolver) Approver(ctx context.Context, obj *types.RightsRequestPrivacyDetails) (*types.Profile, error) {
 	return r.rightsRequestRecordProfile(ctx, obj.RightsRequestID, obj.ApproverID)
+}
+
+// Finding is the resolver for the finding field.
+func (r *rightsRequestPrivacyDetailsResolver) Finding(ctx context.Context, obj *types.RightsRequestPrivacyDetails) (*types.Finding, error) {
+	if obj.FindingID == nil {
+		return nil, nil
+	}
+
+	if _, err := r.authorize(ctx, obj.RightsRequestID, probo.ActionRightsRequestGet); err != nil {
+		return nil, err
+	}
+
+	scope, err := r.authorize(ctx, *obj.FindingID, probo.ActionFindingGet)
+	if err != nil {
+		return nil, err
+	}
+
+	finding, err := r.probo.Findings.Get(ctx, scope, *obj.FindingID)
+	if err != nil {
+		if errors.Is(err, coredata.ErrResourceNotFound) {
+			return nil, nil
+		}
+
+		r.logger.ErrorCtx(ctx, "cannot get finding", log.Error(err))
+		return nil, gqlutils.Internal(ctx)
+	}
+
+	return types.NewFinding(finding), nil
 }
 
 // RightsRequestPrivacyDetails returns schema.RightsRequestPrivacyDetailsResolver implementation.

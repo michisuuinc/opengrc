@@ -21,7 +21,9 @@ package console_v1
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
+	"fmt"
 	"time"
 
 	"go.gearno.de/kit/log"
@@ -32,6 +34,7 @@ import (
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
 	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/validator"
+	"go.probo.inc/probo/pkg/xlsxexport"
 )
 
 func newRightsRequestPrivacyDetails(
@@ -44,6 +47,7 @@ func newRightsRequestPrivacyDetails(
 		RightsRequestID:         request.ID,
 		HandlerID:               d.HandlerProfileID,
 		ApproverID:              d.ApproverProfileID,
+		FindingID:               d.FindingID,
 		Category:                d.Category,
 		EffectiveCategory:       probo.RightsRequestEffectiveCategory(request, d),
 		ReceivedOn:              formatTrainingDate(d.ReceivedOn),
@@ -61,6 +65,7 @@ func newRightsRequestPrivacyDetails(
 		DecisionReason:          d.DecisionReason,
 		AnswerMethod:            d.AnswerMethod,
 		AnsweredOn:              formatTrainingDate(d.AnsweredOn),
+		FirstRespondedOn:        formatTrainingDate(d.FirstRespondedOn),
 		HandlingDays:            probo.RightsRequestHandlingDays(receivedOn, d),
 	}
 
@@ -116,6 +121,7 @@ func newUpdateRightsRequestPrivacyDetailsRequest(
 		DecisionReason:     input.DecisionReason,
 		AnswerMethod:       input.AnswerMethod,
 		ApproverID:         input.ApproverID,
+		FindingID:          input.FindingID,
 	}
 
 	for _, date := range []struct {
@@ -128,6 +134,7 @@ func newUpdateRightsRequestPrivacyDetailsRequest(
 		{"supplementRequestedOn", input.SupplementRequestedOn, &req.SupplementRequestedOn},
 		{"supplementReceivedOn", input.SupplementReceivedOn, &req.SupplementReceivedOn},
 		{"answeredOn", input.AnsweredOn, &req.AnsweredOn},
+		{"firstRespondedOn", input.FirstRespondedOn, &req.FirstRespondedOn},
 	} {
 		parsed, err := parseOptionalTrainingDate(date.field, date.value)
 		if err != nil {
@@ -155,10 +162,57 @@ func (r *Resolver) rightsRequestRecordError(ctx context.Context, err error, msg 
 		return gqlutils.Invalid(ctx, errPeriod)
 	}
 	if errors.Is(err, coredata.ErrResourceNotFound) {
-		return gqlutils.NotFoundf(ctx, "request, handler or approver not found")
+		return gqlutils.NotFoundf(ctx, "request, handler, approver or finding not found")
 	}
 
 	r.logger.ErrorCtx(ctx, msg, log.Error(err))
 
 	return gqlutils.Internal(ctx)
+}
+
+type rightsRequestExporter func(
+	ctx context.Context,
+	scope coredata.Scoper,
+	req probo.ExportRightsRequestRecordsRequest,
+) ([]byte, error)
+
+// exportRightsRequestWorkbook authorizes and runs an export of the request
+// records for a receipt period.
+func (r *Resolver) exportRightsRequestWorkbook(
+	ctx context.Context,
+	input types.ExportRightsRequestRecordsInput,
+	export rightsRequestExporter,
+) (*types.ExportRightsRequestRecordsPayload, error) {
+	// The records name the handlers and approvers besides the requests.
+	if _, err := r.authorize(ctx, input.OrganizationID, iam.ActionMembershipProfileList); err != nil {
+		return nil, err
+	}
+
+	scope, err := r.authorize(ctx, input.OrganizationID, probo.ActionRightsRequestList)
+	if err != nil {
+		return nil, err
+	}
+
+	receivedFrom, err := parseOptionalTrainingDate("receivedFrom", input.ReceivedFrom)
+	if err != nil {
+		return nil, r.rightsRequestRecordError(ctx, err, "")
+	}
+
+	receivedTo, err := parseOptionalTrainingDate("receivedTo", input.ReceivedTo)
+	if err != nil {
+		return nil, r.rightsRequestRecordError(ctx, err, "")
+	}
+
+	workbook, err := export(ctx, scope, probo.ExportRightsRequestRecordsRequest{
+		OrganizationID: input.OrganizationID,
+		ReceivedFrom:   receivedFrom,
+		ReceivedTo:     receivedTo,
+	})
+	if err != nil {
+		return nil, r.rightsRequestRecordError(ctx, err, "cannot export rights request records")
+	}
+
+	return &types.ExportRightsRequestRecordsPayload{
+		Data: fmt.Sprintf("data:%s;base64,%s", xlsxexport.ContentType, base64.StdEncoding.EncodeToString(workbook)),
+	}, nil
 }

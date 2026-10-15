@@ -57,30 +57,7 @@ func (s RightsRequestPrivacyService) Export(
 	scope coredata.Scoper,
 	req ExportRightsRequestRecordsRequest,
 ) ([]byte, error) {
-	if req.ReceivedFrom != nil {
-		from := trainingDateOnly(*req.ReceivedFrom)
-		req.ReceivedFrom = &from
-	}
-
-	if req.ReceivedTo != nil {
-		to := trainingDateOnly(*req.ReceivedTo)
-		req.ReceivedTo = &to
-	}
-
-	if req.ReceivedFrom != nil && req.ReceivedTo != nil && req.ReceivedTo.Before(*req.ReceivedFrom) {
-		return nil, &ErrRightsRequestInvalidPeriod{}
-	}
-
-	var data rightsRequestRecordData
-
-	err := s.svc.pg.WithConn(
-		ctx,
-		func(ctx context.Context, conn pg.Querier) error {
-			var err error
-			data, err = loadRightsRequestRecordData(ctx, conn, scope, req)
-			return err
-		},
-	)
+	data, err := s.loadRecords(ctx, scope, req, func(coredata.RightsRequestPrivacyCategory) bool { return true })
 	if err != nil {
 		return nil, err
 	}
@@ -93,11 +70,69 @@ func (s RightsRequestPrivacyService) Export(
 	return workbook, nil
 }
 
+// ExportComplaints renders the complaint and consultation record (苦情・相談の
+// 記録) received in the period as an .xlsx workbook, with the counts per
+// department.
+func (s RightsRequestPrivacyService) ExportComplaints(
+	ctx context.Context,
+	scope coredata.Scoper,
+	req ExportRightsRequestRecordsRequest,
+) ([]byte, error) {
+	data, err := s.loadRecords(ctx, scope, req, isComplaintOrConsultation)
+	if err != nil {
+		return nil, err
+	}
+
+	workbook, err := xlsxexport.BuildWorkbook(buildComplaintRecordSheets(data, time.Now().In(ledgerTimeZone))...)
+	if err != nil {
+		return nil, fmt.Errorf("cannot build complaint record workbook: %w", err)
+	}
+
+	return workbook, nil
+}
+
+// loadRecords checks the period and loads the requests received in it whose
+// category passes include.
+func (s RightsRequestPrivacyService) loadRecords(
+	ctx context.Context,
+	scope coredata.Scoper,
+	req ExportRightsRequestRecordsRequest,
+	include func(coredata.RightsRequestPrivacyCategory) bool,
+) (rightsRequestRecordData, error) {
+	if req.ReceivedFrom != nil {
+		from := trainingDateOnly(*req.ReceivedFrom)
+		req.ReceivedFrom = &from
+	}
+
+	if req.ReceivedTo != nil {
+		to := trainingDateOnly(*req.ReceivedTo)
+		req.ReceivedTo = &to
+	}
+
+	if req.ReceivedFrom != nil && req.ReceivedTo != nil && req.ReceivedTo.Before(*req.ReceivedFrom) {
+		return rightsRequestRecordData{}, &ErrRightsRequestInvalidPeriod{}
+	}
+
+	var data rightsRequestRecordData
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(ctx context.Context, conn pg.Querier) error {
+			var err error
+			data, err = loadRightsRequestRecordData(ctx, conn, scope, req, include)
+			return err
+		},
+	)
+
+	return data, err
+}
+
 func loadRightsRequestRecordData(
 	ctx context.Context,
 	conn pg.Querier,
 	scope coredata.Scoper,
 	req ExportRightsRequestRecordsRequest,
+	include func(coredata.RightsRequestPrivacyCategory) bool,
 ) (rightsRequestRecordData, error) {
 	organization := &coredata.Organization{}
 	if err := organization.LoadByID(ctx, conn, scope, req.OrganizationID); err != nil {
@@ -139,7 +174,8 @@ func loadRightsRequestRecordData(
 		receivedOn := RightsRequestEffectiveReceivedOn(r, details)
 
 		if (req.ReceivedFrom != nil && receivedOn.Before(*req.ReceivedFrom)) ||
-			(req.ReceivedTo != nil && receivedOn.After(*req.ReceivedTo)) {
+			(req.ReceivedTo != nil && receivedOn.After(*req.ReceivedTo)) ||
+			!include(RightsRequestEffectiveCategory(r, details)) {
 			continue
 		}
 
@@ -152,6 +188,10 @@ func loadRightsRequestRecordData(
 	})
 
 	if err := fillRightsRequestProfileNames(ctx, conn, scope, records); err != nil {
+		return rightsRequestRecordData{}, err
+	}
+
+	if err := fillRightsRequestFindingReferences(ctx, conn, scope, records); err != nil {
 		return rightsRequestRecordData{}, err
 	}
 
@@ -211,6 +251,41 @@ func fillRightsRequestProfileNames(
 		if d.ApproverProfileID != nil {
 			records[i].ApproverName = names[*d.ApproverProfileID]
 		}
+	}
+
+	return nil
+}
+
+// fillRightsRequestFindingReferences names the finding linked to each
+// request by its reference ID. A finding deleted meanwhile is left blank.
+func fillRightsRequestFindingReferences(
+	ctx context.Context,
+	conn pg.Querier,
+	scope coredata.Scoper,
+	records []rightsRequestRecord,
+) error {
+	references := map[gid.GID]string{}
+
+	for i := range records {
+		d := records[i].Details
+		if d == nil || d.FindingID == nil {
+			continue
+		}
+
+		reference, ok := references[*d.FindingID]
+		if !ok {
+			finding := &coredata.Finding{}
+			err := finding.LoadByID(ctx, conn, scope, *d.FindingID)
+			switch {
+			case err == nil:
+				reference = finding.ReferenceID
+			case !errors.Is(err, coredata.ErrResourceNotFound):
+				return fmt.Errorf("cannot load finding: %w", err)
+			}
+			references[*d.FindingID] = reference
+		}
+
+		records[i].FindingReference = reference
 	}
 
 	return nil

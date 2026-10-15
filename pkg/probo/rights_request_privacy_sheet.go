@@ -55,6 +55,8 @@ type (
 		ReceivedOn   time.Time
 		HandlerName  string
 		ApproverName string
+		// FindingReference is the reference ID of the linked finding.
+		FindingReference string
 	}
 
 	rightsRequestRecordData struct {
