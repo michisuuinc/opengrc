@@ -30,6 +30,7 @@ import {
   Button,
   Card,
   DropdownItem,
+  IconArrowDown,
   IconPlusLarge,
   IconTrashCan,
   PageHeader,
@@ -66,6 +67,7 @@ import {
   rightsRequestsQuery,
 } from "../../../hooks/graph/RightsRequestGraph";
 
+import { ExportRightsRequestRecordsDialog } from "./_components/ExportRightsRequestRecordsDialog";
 import { CreateRightsRequestDialog } from "./dialogs/CreateRightsRequestDialog";
 
 interface RightsRequestsPageProps {
@@ -138,6 +140,11 @@ export default function RightsRequestsPage({
         title={t("rightsRequestsPage.title")}
         description={t("rightsRequestsPage.description")}
       >
+        <ExportRightsRequestRecordsDialog organizationId={organizationId}>
+          <Button variant="secondary" icon={IconArrowDown}>
+            {t("rightsRequestRecord.actions.export")}
+          </Button>
+        </ExportRightsRequestRecordsDialog>
         {organization.node.canCreateRightsRequest && (
           <CreateRightsRequestDialog
             organizationId={organizationId}

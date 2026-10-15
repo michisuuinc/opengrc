@@ -39,6 +39,7 @@ import {
   Textarea,
 } from "@probo/ui";
 import useToast from "@probo/ui/src/v2/Toaster/useToast";
+import { Suspense } from "react";
 import { Controller } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import {
@@ -58,6 +59,8 @@ import {
   useDeleteRightsRequest,
   useUpdateRightsRequest,
 } from "../../../hooks/graph/RightsRequestGraph";
+
+import { RightsRequestRecordSection } from "./_components/RightsRequestRecordCard";
 
 const updateRequestSchema = z.object({
   requestType: z.enum(["ACCESS", "DELETION", "RECTIFICATION", "PORTABILITY", "OBJECTION", "COMPLAINT"]),
@@ -318,6 +321,12 @@ export default function RightsRequestDetailsPage(props: Props) {
           </form>
         </div>
       </Card>
+
+      {request.canViewPrivacyRecord && request.id && (
+        <Suspense fallback={null}>
+          <RightsRequestRecordSection rightsRequestId={request.id} />
+        </Suspense>
+      )}
     </div>
   );
 }

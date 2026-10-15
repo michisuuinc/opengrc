@@ -3711,5 +3711,111 @@
       "save": "Could not save the outsourcing evaluation",
       "export": "Could not export the outsourcing evaluation"
     }
+  },
+  "rightsRequestRecord": {
+    "title": "Request record (PrivacyMark)",
+    "description": "Record of the rights request and complaint procedure. Record the receipt, identity verification and answer, then export the request records as Excel from the list.",
+    "fileName": "request-records",
+    "notChosen": "Not chosen",
+    "followType": "Follow the type ({{value}})",
+    "followWith": "Not chosen (exported as {{value}})",
+    "sections": {
+      "receipt": "Receipt",
+      "verification": "Identity verification",
+      "answer": "Decision and answer"
+    },
+    "fields": {
+      "receivedOn": "Received on",
+      "receiptChannel": "Received by",
+      "category": "Request kind",
+      "handler": "Handler",
+      "targetDepartment": "Department concerned",
+      "byAgent": "Made by an agent",
+      "verificationMethod": "Verification method",
+      "verifiedOn": "Verified on",
+      "verificationNote": "Documents checked, notes",
+      "supplementRequestedOn": "Missing documents requested on",
+      "supplementReceivedOn": "Missing documents received on",
+      "decision": "Decision",
+      "decisionReason": "Reason for not disclosing",
+      "answerMethod": "Answered by",
+      "answeredOn": "Answered on",
+      "approver": "Answer approved by"
+    },
+    "placeholders": {
+      "verificationNote": "e.g. Copy of the driver's license"
+    },
+    "help": {
+      "receivedOn": "The day the request arrived. When empty, the registration date ({{date}}) is used",
+      "supplement": "The wait is not counted in the handling days",
+      "decisionReason": "Write the reason given to the individual, concretely",
+      "approver": "Personal information protection manager"
+    },
+    "categories": {
+      "PURPOSE_NOTIFICATION": "Notification of purpose",
+      "DISCLOSURE": "Disclosure",
+      "CORRECTION": "Correction, addition, deletion",
+      "SUSPENSION": "Suspension of use, erasure",
+      "THIRD_PARTY_PROVISION_STOP": "Stop of third-party provision",
+      "THIRD_PARTY_RECORD_DISCLOSURE": "Disclosure of third-party provision records",
+      "COMPLAINT": "Complaint",
+      "CONSULTATION": "Consultation"
+    },
+    "channels": {
+      "POSTAL": "Post",
+      "EMAIL": "Email",
+      "WEB_FORM": "Web form",
+      "PHONE": "Phone",
+      "IN_PERSON": "In person",
+      "OTHER": "Other"
+    },
+    "verificationMethods": {
+      "ID_DOCUMENT": "Identity documents",
+      "ACCOUNT": "Account or registered information",
+      "OTHER": "Other",
+      "NOT_REQUIRED": "Not required (complaints, consultations)"
+    },
+    "decisions": {
+      "FULFILLED": "Answered as requested",
+      "PARTIALLY_FULFILLED": "Partly (some not disclosed)",
+      "NOT_FULFILLED": "Not answered (not disclosed)"
+    },
+    "answerMethods": {
+      "POSTAL": "Letter (post)",
+      "EMAIL": "Email",
+      "ELECTRONIC_RECORD": "Electronic record",
+      "PHONE": "Phone, in person",
+      "OTHER": "Other"
+    },
+    "days": {
+      "answered": "Handling days: {{days}} (without the wait for missing documents)",
+      "notAnswered": "Not answered yet. Received on {{date}}."
+    },
+    "warnings": {
+      "reasonMissing": "Enter the reason when the request is answered partly or not at all.",
+      "supplementOrder": "Missing documents must be received after they were requested.",
+      "beforeReceived": "Verification, document requests and the answer cannot come before the receipt date.",
+      "approverMissing": "No approver for the answer. The personal information protection manager approves answers before they are sent.",
+      "sameApprover": "The handler and the approver are the same person. The personal information protection manager approves."
+    },
+    "export": {
+      "title": "Export records",
+      "description": "Export the request records received in the period, with a summary per kind, as Excel. Leave a date empty for no bound. For the management review, choose the fiscal year.",
+      "from": "Received from",
+      "to": "Received to",
+      "invalidPeriod": "The end date must be after the start date."
+    },
+    "actions": {
+      "save": "Save record",
+      "saving": "Saving...",
+      "export": "Export records (Excel)"
+    },
+    "messages": {
+      "saved": "Record saved"
+    },
+    "errors": {
+      "save": "Could not save the record",
+      "export": "Could not export the records"
+    }
   }
 }

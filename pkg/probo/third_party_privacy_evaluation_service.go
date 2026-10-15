@@ -249,13 +249,24 @@ func (s ThirdPartyPrivacyEvaluationService) GetProfile(
 	scope coredata.Scoper,
 	profileID *gid.GID,
 ) (*coredata.MembershipProfile, error) {
+	return getOptionalProfile(ctx, s.svc, scope, profileID)
+}
+
+// getOptionalProfile returns a member profile, or nil when the ID is nil or
+// the profile is gone.
+func getOptionalProfile(
+	ctx context.Context,
+	svc *Service,
+	scope coredata.Scoper,
+	profileID *gid.GID,
+) (*coredata.MembershipProfile, error) {
 	if profileID == nil {
 		return nil, nil
 	}
 
 	var profiles coredata.MembershipProfiles
 
-	err := s.svc.pg.WithConn(
+	err := svc.pg.WithConn(
 		ctx,
 		func(ctx context.Context, conn pg.Querier) error {
 			return profiles.LoadByIDs(ctx, conn, scope, []gid.GID{*profileID})

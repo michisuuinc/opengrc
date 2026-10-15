@@ -80,6 +80,9 @@ type RightsRequest implements Node {
     details: String
     deadline: Datetime
     actionTaken: String
+    # Fork: Japanese PrivacyMark record of requests
+    # (rights_request_privacy.graphql).
+    privacyDetails: RightsRequestPrivacyDetails! @goField(forceResolver: true)
     createdAt: Datetime!
     updatedAt: Datetime!
 

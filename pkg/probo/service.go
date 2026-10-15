@@ -117,6 +117,7 @@ type (
 		Trainings                             *TrainingService
 		AuditPrivacy                          *AuditPrivacyService
 		ThirdPartyPrivacyEvaluations          *ThirdPartyPrivacyEvaluationService
+		RightsRequestPrivacy                  *RightsRequestPrivacyService
 		DataProtectionImpactAssessments       *DataProtectionImpactAssessmentService
 		TransferImpactAssessments             *TransferImpactAssessmentService
 		StatementsOfApplicability             *StatementOfApplicabilityService
@@ -235,6 +236,7 @@ func NewService(
 	svc.Trainings = &TrainingService{svc: svc}
 	svc.AuditPrivacy = &AuditPrivacyService{svc: svc}
 	svc.ThirdPartyPrivacyEvaluations = &ThirdPartyPrivacyEvaluationService{svc: svc}
+	svc.RightsRequestPrivacy = &RightsRequestPrivacyService{svc: svc}
 	svc.DataProtectionImpactAssessments = &DataProtectionImpactAssessmentService{svc: svc}
 	svc.TransferImpactAssessments = &TransferImpactAssessmentService{svc: svc}
 	svc.StatementsOfApplicability = &StatementOfApplicabilityService{svc: svc}
