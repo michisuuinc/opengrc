@@ -60,6 +60,7 @@ import { obligationRoutes } from "./routes/obligationRoutes";
 import { processingActivityRoutes } from "./routes/processingActivityRoutes";
 import { rightsRequestRoutes } from "./routes/rightsRequestRoutes";
 import { statementsOfApplicabilityRoutes } from "./routes/statementsOfApplicabilityRoutes";
+import { trainingRoutes } from "./routes/trainingRoutes";
 
 const routes = [
   {
@@ -233,6 +234,7 @@ const routes = [
               ...documentsRoutes,
               ...taskRoutes,
               ...statementsOfApplicabilityRoutes,
+              ...trainingRoutes,
             ],
           },
           {

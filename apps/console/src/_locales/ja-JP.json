@@ -2273,6 +2273,7 @@
     "dataProtectionImpactAssessments": "データ保護影響評価（DPIA）",
     "transferImpactAssessments": "移転影響評価（TIA）",
     "statementsOfApplicability": "適用宣言書（SoA）",
+    "trainings": "教育",
     "rightsRequests": "本人からの請求",
     "campaigns": "キャンペーン",
     "connections": "コネクター",
@@ -4601,6 +4602,134 @@
     "errors": {
       "save": "リスク分析表の項目を保存できませんでした",
       "export": "リスク分析表を出力できませんでした"
+    }
+  },
+  "training": {
+    "title": "教育",
+    "description": "Pマークの年間の教育計画です。教材、受講者、受講状況、理解度テストの結果を管理します。",
+    "fileName": "教育実施記録",
+    "empty": "この年度の教育はまだありません。",
+    "loading": "読み込み中...",
+    "allYears": "すべての年度",
+    "fiscalYearLabel": "{{year}}年度",
+    "periodValue": "{{startsOn}}〜{{endsOn}}",
+    "progressValue": "完了 {{completed}} / {{total}} 人",
+    "notAttendedValue": "未受講 {{count}} 人",
+    "testRequiredValue": "あり（合格点：{{passScore}}）",
+    "timeZoneNote": "署名は、実施期間内（タイムゾーン：{{timeZone}}）にされたものだけを受講として数えます。",
+    "deleteBlocked": "受講記録を残すため、受講記録がある教育は削除できません。",
+    "deleteConfirm": "教育「{{name}}」と受講記録を削除しますか？",
+    "fields": {
+      "name": "教育の名前",
+      "fiscalYear": "年度",
+      "kind": "種類",
+      "method": "方法",
+      "period": "実施期間",
+      "startsOn": "開始日",
+      "endsOn": "終了日",
+      "instructor": "講師",
+      "description": "内容",
+      "testRequired": "理解度テスト",
+      "passScore": "合格点",
+      "progress": "受講状況"
+    },
+    "help": {
+      "description": "教育で扱う内容（例：個人情報保護方針、PMS の体制と役割、事故の報告方法）",
+      "passScore": "この点数以上を合格にします。空欄にすると、合否を手で入力します。",
+      "manualAttendedOn": "集合研修など、署名を使わない教育のときに入力します。入力した日付は署名より優先します。"
+    },
+    "kinds": {
+      "PERIODIC": "定期教育",
+      "ONBOARDING": "新規入社者教育",
+      "ROLE_BASED": "役割別教育",
+      "AD_HOC": "臨時教育"
+    },
+    "methods": {
+      "CLASSROOM": "集合研修",
+      "ONLINE": "オンライン研修",
+      "E_LEARNING": "e ラーニング",
+      "MATERIALS": "資料の配布と説明"
+    },
+    "statuses": {
+      "COMPLETED": "完了",
+      "TEST_PENDING": "テスト未実施",
+      "FAILED": "不合格",
+      "NOT_ATTENDED": "未受講"
+    },
+    "sources": {
+      "SIGNATURE": "署名",
+      "MANUAL": "手入力"
+    },
+    "testRequired": {
+      "yes": "あり",
+      "no": "なし"
+    },
+    "testPassed": {
+      "auto": "点数から判定",
+      "passed": "合格",
+      "failed": "不合格"
+    },
+    "materials": {
+      "title": "教材",
+      "description": "受講者が従業員ポータルで読んで署名する文書です。実施期間内にすべての教材に署名すると受講済みになります。",
+      "edit": "教材を選ぶ",
+      "empty": "教材はまだありません。集合研修は教材なしでも記録できます。"
+    },
+    "participants": {
+      "title": "受講者",
+      "description": "この教育を受ける全員です。派遣社員・アルバイトも含めます。",
+      "add": "受講者を追加",
+      "addSelected": "選んだ人を追加",
+      "selectAll": "全員を選ぶ",
+      "clearAll": "選択を解除",
+      "selectedCount": "{{count}} 人を選択中",
+      "noCandidates": "すべてのメンバーが受講者になっています。",
+      "requestSignatures": "署名を依頼",
+      "allStatuses": "すべての状況",
+      "empty": "受講者はいません。",
+      "removeConfirm": "{{name}} さんを受講者から外しますか？",
+      "attendedValue": "{{date}}（{{source}}）",
+      "signaturesValue": "{{signed}} / {{total}}",
+      "recordsKept": "受講記録を残すため、受講済みまたはテストの結果がある受講者は外せません。",
+      "signedOutsidePeriod": "期間外に署名済みの教材が {{count}} 件あります。教材の新しい版を公開すると、もう一度署名を依頼できます。",
+      "fields": {
+        "fullName": "氏名",
+        "department": "部門",
+        "status": "状況",
+        "attendedOn": "受講日",
+        "manualAttendedOn": "受講日（手入力）",
+        "signatures": "署名した教材",
+        "testScore": "点数",
+        "testPassed": "合否",
+        "note": "備考"
+      }
+    },
+    "actions": {
+      "create": "教育を追加",
+      "edit": "編集",
+      "save": "保存",
+      "cancel": "キャンセル",
+      "delete": "削除",
+      "remove": "外す",
+      "export": "教育実施記録を出力（Excel）"
+    },
+    "validation": {
+      "nameRequired": "教育の名前を入力してください",
+      "dateRequired": "日付を入力してください",
+      "period": "終了日は開始日以降にしてください"
+    },
+    "messages": {
+      "created": "教育を追加しました",
+      "saved": "保存しました",
+      "deleted": "教育を削除しました",
+      "participantRemoved": "受講者から外しました",
+      "signaturesRequested": "未受講の受講者に署名を依頼しました"
+    },
+    "errors": {
+      "save": "保存できませんでした",
+      "delete": "教育を削除できませんでした",
+      "export": "教育実施記録を出力できませんでした",
+      "requestSignatures": "署名を依頼できませんでした。教材がすべて公開されているか確認してください。"
     }
   },
   "createProcessingActivityDialog": {

@@ -179,6 +179,14 @@ const (
 	ActionAssetDelete  = "core:asset:delete"
 	ActionAssetPublish = "core:asset:publish"
 
+	// Training plan actions (fork: michisuuinc/opengrc). Participants are
+	// managed through the plan's update action.
+	ActionTrainingPlanGet    = "core:training-plan:get"
+	ActionTrainingPlanList   = "core:training-plan:list"
+	ActionTrainingPlanCreate = "core:training-plan:create"
+	ActionTrainingPlanUpdate = "core:training-plan:update"
+	ActionTrainingPlanDelete = "core:training-plan:delete"
+
 	// Datum actions
 	ActionDatumGet     = "core:datum:get"
 	ActionDatumList    = "core:datum:list"

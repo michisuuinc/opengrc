@@ -125,6 +125,10 @@ func ResourceTypeName(entityType uint16) string {
 		return "TaskActivity"
 	case TaskSyncJobEntityType:
 		return "TaskSyncJob"
+	case TrainingPlanEntityType:
+		return "TrainingPlan"
+	case TrainingParticipantEntityType:
+		return "TrainingParticipant"
 	default:
 		return "Unknown"
 	}

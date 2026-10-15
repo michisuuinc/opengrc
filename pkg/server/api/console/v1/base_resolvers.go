@@ -302,6 +302,16 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 			return types.NewDocumentVersionApprovalQuorum(quorum), nil
 		}
+	case coredata.TrainingPlanEntityType:
+		action = probo.ActionTrainingPlanGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			return r.trainingPlanNode(ctx, scope, id)
+		}
+	case coredata.TrainingParticipantEntityType:
+		action = probo.ActionTrainingPlanGet
+		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
+			return r.trainingParticipantNode(ctx, scope, id)
+		}
 	case coredata.AssetEntityType:
 		action = probo.ActionAssetList
 		loadNode = func(ctx context.Context, scope *coredata.Scope, id gid.GID) (types.Node, error) {
