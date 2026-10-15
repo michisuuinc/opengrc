@@ -2852,6 +2852,7 @@ func generateSignaturePagePDF(
 	htmlContent, err := docgen.RenderSignaturePageHTML(docgen.SignaturePageData{
 		Signatures: signatureData,
 		Landscape:  isLandscape,
+		Language:   docgen.DetectLanguage(version.Title, version.Content),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("cannot render signature page HTML: %w", err)

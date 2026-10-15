@@ -204,6 +204,7 @@ type (
 		CompanyHorizontalLogoBase64 string
 		MermaidJS                   template.JS
 		Landscape                   bool
+		Language                    string // <html lang>; detected from the text when empty
 	}
 
 	SignatureData struct {
@@ -216,6 +217,7 @@ type (
 	SignaturePageData struct {
 		Signatures []SignatureData
 		Landscape  bool
+		Language   string // <html lang>; "en" when empty. Pass the document's language: names alone are often kanji only
 	}
 
 	StatementOfApplicabilityData struct {
@@ -667,6 +669,9 @@ func ProseMirrorJSONToHTML(content json.RawMessage) template.HTML {
 
 func RenderHTML(data DocumentData) ([]byte, error) {
 	data.MermaidJS = template.JS(mermaidJSSource)
+	if data.Language == "" {
+		data.Language = DetectLanguage(data.Title, string(data.Content))
+	}
 
 	page := struct {
 		DocumentData
@@ -685,6 +690,10 @@ func RenderHTML(data DocumentData) ([]byte, error) {
 }
 
 func RenderSignaturePageHTML(data SignaturePageData) ([]byte, error) {
+	if data.Language == "" {
+		data.Language = "en"
+	}
+
 	var buf bytes.Buffer
 	if err := signaturePageTemplate.Execute(&buf, data); err != nil {
 		return nil, fmt.Errorf("cannot execute signature page template: %w", err)
